@@ -387,7 +387,7 @@ function App() {
             <div className="login-container">
               <div className="login-header">
                 <div className="big-shield"><ShieldCheck size={64} strokeWidth={1.7} /></div>
-                <h1>Indira <span>CRM</span></h1>
+                <h1>Insurance <span>CRM</span></h1>
               </div>
 
               <form onSubmit={handleLogin} className="login-form">
@@ -468,7 +468,7 @@ function App() {
             <div className="welcome-glow" />
             <div className="brand-center">
               <div className="big-shield"><ShieldCheck size={74} strokeWidth={1.7} /></div>
-              <h1>Indira <span>CRM</span></h1>
+              <h1>Insurance <span>CRM</span></h1>
               <p>{t.tagline}</p>
             </div>
             <div className="welcome-lower">
@@ -491,7 +491,7 @@ function App() {
             <div className="login-container">
               <div className="login-header">
                 <div className="big-shield"><ShieldCheck size={64} strokeWidth={1.7} /></div>
-                <h1>Indira <span>CRM</span></h1>
+                <h1>Insurance <span>CRM</span></h1>
               </div>
 
               <form onSubmit={handleLogin} className="login-form">
@@ -560,7 +560,7 @@ function App() {
         ) : (
           <>
             <header className="topbar">
-              <div className="header-brand" onClick={() => navigate('home')}><ShieldCheck size={29} /><span>Indira <b>CRM</b></span></div>
+              <div className="header-brand" onClick={() => navigate('home')}><ShieldCheck size={29} /><span>Insurance <b>CRM</b></span></div>
               <div className="header-actions">
                 <span style={{ fontSize: '11px', color: '#666', marginRight: '12px', padding: '4px 8px', backgroundColor: '#f0f0f0', borderRadius: '12px' }}>
                   {user?.role === 'admin' ? 'Admin' : user?.role === 'agent' ? 'Agent' : 'Viewer'}
