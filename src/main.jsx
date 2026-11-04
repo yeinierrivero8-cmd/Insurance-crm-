@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 console.log('main.jsx loaded');
-import './style.css';
+// import './style.css';
 
 const API = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
 
