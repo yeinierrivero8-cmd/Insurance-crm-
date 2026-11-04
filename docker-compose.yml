@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: insuraflow_db
+    environment:
+      POSTGRES_USER: insuraflow_user
+      POSTGRES_PASSWORD: insuraflow_password
+      POSTGRES_DB: insuraflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insuraflow_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: insuraflow_api
+    environment:
+      DATABASE_URL: postgresql://insuraflow_user:insuraflow_password@postgres:5432/insuraflow_db
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend
+      - /app/node_modules
+
+volumes:
+  postgres_data:

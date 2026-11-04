@@ -1,0 +1,69 @@
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const { Pool } = require('pg');
+
+dotenv.config();
+
+const app = express();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Database health check
+app.get('/api/health/db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({
+      status: 'connected',
+      timestamp: result.rows[0].now
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'disconnected',
+      error: error.message
+    });
+  }
+});
+
+// Auth routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+// Clients routes
+const clientRoutes = require('./routes/clients');
+app.use('/api/clients', clientRoutes);
+
+// Policies routes
+const policyRoutes = require('./routes/policies');
+app.use('/api/policies', policyRoutes);
+
+// Renewals routes
+const renewalRoutes = require('./routes/renewals');
+app.use('/api/renewals', renewalRoutes);
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    status: err.status || 500
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
+
+module.exports = { app, pool };
