@@ -60,11 +60,12 @@ const renewalRoutes = require('./routes/renewals');
 app.use('/api/renewals', authenticate, renewalRoutes);
 
 // Serve static files from dist folder (frontend build)
-app.use(express.static(path.join(__dirname, '../dist')));
+const distPath = path.resolve(__dirname, '../dist');
+app.use(express.static(distPath));
 
 // SPA fallback: redirect all non-API requests to index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Error handler
