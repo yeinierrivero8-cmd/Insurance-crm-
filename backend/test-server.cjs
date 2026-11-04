@@ -102,7 +102,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   // CHECK RATE LIMITING FIRST
-  const lockStatus = await LoginAttemptService.isAccountLocked(email, agencyId);
+  let lockStatus = await LoginAttemptService.isAccountLocked(email, agencyId);
   if (lockStatus.locked) {
     return res.status(429).json({
       error: 'too_many_attempts',
@@ -117,6 +117,18 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     // FAILED LOGIN: Record attempt
     await LoginAttemptService.recordFailedAttempt(email, agencyId);
+
+    // RE-CHECK if account is now locked (after recording the failure)
+    lockStatus = await LoginAttemptService.isAccountLocked(email, agencyId);
+    if (lockStatus.locked) {
+      return res.status(429).json({
+        error: 'too_many_attempts',
+        message: `Account temporarily locked for ${lockStatus.minutesRemaining} minute(s)`,
+        retryAfter: lockStatus.minutesRemaining * 60,
+        lockedUntil: lockStatus.lockedUntil.toISOString()
+      });
+    }
+
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 

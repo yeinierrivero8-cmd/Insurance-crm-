@@ -44,7 +44,6 @@ class LoginAttemptService {
     // Lock if threshold exceeded (after 5 attempts)
     if (record.attempts > MAX_ATTEMPTS) {
       record.lockedUntil = now + LOCKOUT_DURATION;
-      console.log(`🔒 Account locked: ${email} (${record.attempts} attempts)`);
     }
 
     return record;
