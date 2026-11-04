@@ -131,7 +131,9 @@ function App() {
   const [formError, setFormError] = useState('');
   const [toast, setToast] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  const [avatarUrl, setAvatarUrl] = useState(localStorage.getItem('userAvatar') || null);
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    try { return localStorage.getItem('userAvatar') || null; } catch { return null; }
+  });
 
   // Auth state
   const [user, setUser] = useState(null);
@@ -155,24 +157,27 @@ function App() {
 
   // Check for existing token on mount + setup token refresh
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUser(decoded);
-        setPage('home');
-      } catch (e) {
-        localStorage.removeItem('accessToken');
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        try {
+          const decoded = JSON.parse(atob(token.split('.')[1]));
+          setUser(decoded);
+          setPage('home');
+        } catch (e) {
+          localStorage.removeItem('accessToken');
+        }
       }
+    } catch (e) {
+      console.warn('localStorage access failed', e);
     }
 
-    // Auto-refresh token every 20 minutes (before 24h expiry)
+    // Auto-refresh token every 20 minutes
     const refreshInterval = setInterval(async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      if (accessToken && refreshToken) {
-        try {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (accessToken && refreshToken) {
           const res = await fetch(`${API}/auth/refresh`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -183,11 +188,11 @@ function App() {
             localStorage.setItem('accessToken', data.accessToken);
             if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
           }
-        } catch (err) {
-          console.log('Token refresh failed, will retry');
         }
+      } catch (e) {
+        console.log('Token refresh error', e);
       }
-    }, 20 * 60 * 1000); // 20 minutes
+    }, 20 * 60 * 1000);
 
     return () => clearInterval(refreshInterval);
   }, []);

@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 
 const createAbortController = (timeout) => {
