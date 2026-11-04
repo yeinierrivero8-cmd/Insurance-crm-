@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const LoginAttemptService = require('./services/LoginAttemptService.cjs');
+const RBACService = require('./services/RBACService.cjs');
+const { requirePermission, requireRole } = require('./middleware/rbacMiddleware.cjs');
 
 const app = express();
 app.use(cors());
@@ -26,11 +28,20 @@ const db = {
     },
     {
       id: 2,
-      email: 'agent1@insuraflow.com',
-      name: 'Agent 1',
+      email: 'agent@insuraflow.com',
+      name: 'Agent User',
       password_hash: bcrypt.hashSync('Agent@123', 12),
       agency_id: 1,
       role: 'agent',
+      is_active: true
+    },
+    {
+      id: 3,
+      email: 'viewer@insuraflow.com',
+      name: 'Viewer User',
+      password_hash: bcrypt.hashSync('Viewer@123', 12),
+      agency_id: 1,
+      role: 'viewer',
       is_active: true
     }
   ],
@@ -228,21 +239,21 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // GET clients
-app.get('/api/clients', authenticate, (req, res) => {
+app.get('/api/clients', authenticate, requirePermission('clients:read'), (req, res) => {
   const agencyId = parseInt(req.query.agencyId);
   const clients = db.clients.filter(c => c.agency_id === agencyId && !c.deleted_at);
   res.json(clients);
 });
 
 // GET client by id
-app.get('/api/clients/:id', authenticate, (req, res) => {
+app.get('/api/clients/:id', authenticate, requirePermission('clients:read'), (req, res) => {
   const client = db.clients.find(c => c.id === parseInt(req.params.id) && !c.deleted_at);
   if (!client) return res.status(404).json({ error: 'Not found' });
   res.json(client);
 });
 
-// POST client
-app.post('/api/clients', authenticate, (req, res) => {
+// POST client (create)
+app.post('/api/clients', authenticate, requirePermission('clients:create'), (req, res) => {
   const { name, email, phone, type, status, agencyId } = req.body;
 
   if (!name || !agencyId) {
@@ -263,17 +274,118 @@ app.post('/api/clients', authenticate, (req, res) => {
   res.status(201).json(newClient);
 });
 
+// PUT client (update)
+app.put('/api/clients/:id', authenticate, requirePermission('clients:update'), (req, res) => {
+  const clientId = parseInt(req.params.id);
+  const client = db.clients.find(c => c.id === clientId && !c.deleted_at);
+
+  if (!client) {
+    return res.status(404).json({ error: 'Client not found' });
+  }
+
+  const { name, email, phone, type, status } = req.body;
+  if (name) client.name = name;
+  if (email) client.email = email;
+  if (phone) client.phone = phone;
+  if (type) client.type = type;
+  if (status) client.status = status;
+
+  res.json(client);
+});
+
+// DELETE client
+app.delete('/api/clients/:id', authenticate, requirePermission('clients:delete'), (req, res) => {
+  const clientId = parseInt(req.params.id);
+  const clientIndex = db.clients.findIndex(c => c.id === clientId && !c.deleted_at);
+
+  if (clientIndex === -1) {
+    return res.status(404).json({ error: 'Client not found' });
+  }
+
+  db.clients[clientIndex].deleted_at = new Date().toISOString();
+  res.json({ message: 'Client deleted' });
+});
+
+// GET policies
+app.get('/api/policies', authenticate, requirePermission('policies:read'), (req, res) => {
+  const agencyId = parseInt(req.query.agencyId);
+  const policies = db.policies.filter(p => p.agency_id === agencyId);
+  res.json(policies);
+});
+
+// GET policy by id
+app.get('/api/policies/:id', authenticate, requirePermission('policies:read'), (req, res) => {
+  const policy = db.policies.find(p => p.id === parseInt(req.params.id));
+  if (!policy) return res.status(404).json({ error: 'Policy not found' });
+  res.json(policy);
+});
+
+// POST policy (create)
+app.post('/api/policies', authenticate, requirePermission('policies:create'), (req, res) => {
+  const { client_id, type, policy_number, premium, expiry_date, agencyId, status } = req.body;
+
+  if (!client_id || !policy_number || !agencyId) {
+    return res.status(400).json({ error: 'client_id, policy_number, and agencyId required' });
+  }
+
+  const newPolicy = {
+    id: Math.max(...db.policies.map(p => p.id), 0) + 1,
+    client_id,
+    type: type || 'auto',
+    policy_number,
+    premium: premium || 0,
+    expiry_date,
+    agency_id: agencyId,
+    status: status || 'active'
+  };
+
+  db.policies.push(newPolicy);
+  res.status(201).json(newPolicy);
+});
+
+// PUT policy (update)
+app.put('/api/policies/:id', authenticate, requirePermission('policies:update'), (req, res) => {
+  const policyId = parseInt(req.params.id);
+  const policy = db.policies.find(p => p.id === policyId);
+
+  if (!policy) {
+    return res.status(404).json({ error: 'Policy not found' });
+  }
+
+  const { type, policy_number, premium, expiry_date, status } = req.body;
+  if (type) policy.type = type;
+  if (policy_number) policy.policy_number = policy_number;
+  if (premium) policy.premium = premium;
+  if (expiry_date) policy.expiry_date = expiry_date;
+  if (status) policy.status = status;
+
+  res.json(policy);
+});
+
+// DELETE policy
+app.delete('/api/policies/:id', authenticate, requirePermission('policies:delete'), (req, res) => {
+  const policyId = parseInt(req.params.id);
+  const policyIndex = db.policies.findIndex(p => p.id === policyId);
+
+  if (policyIndex === -1) {
+    return res.status(404).json({ error: 'Policy not found' });
+  }
+
+  db.policies.splice(policyIndex, 1);
+  res.json({ message: 'Policy deleted' });
+});
+
 // GET renewals
-app.get('/api/renewals', authenticate, (req, res) => {
+app.get('/api/renewals', authenticate, requirePermission('renewals:read'), (req, res) => {
   const agencyId = parseInt(req.query.agencyId);
   const renewals = db.renewals.filter(r => r.agency_id === agencyId);
   res.json(renewals);
 });
 
-// PUT renewal
-app.put('/api/renewals/:id', authenticate, (req, res) => {
+// PUT renewal (update)
+app.put('/api/renewals/:id', authenticate, requirePermission('renewals:update'), (req, res) => {
   const renewal = db.renewals.find(r => r.id === parseInt(req.params.id));
-  if (!renewal) return res.status(404).json({ error: 'Not found' });
+  if (!renewal) return res.status(404).json({ error: 'Renewal not found' });
 
   renewal.status = req.body.status || renewal.status;
   res.json(renewal);
@@ -336,8 +448,18 @@ app.listen(PORT, () => {
   console.log(`  GET  http://localhost:${PORT}/test/rate-limit/status/:email`);
   console.log(`  POST http://localhost:${PORT}/test/rate-limit/reset (email in body)`);
   console.log(`  POST http://localhost:${PORT}/test/rate-limit/simulate-failures (email, count)`);
-  console.log(`\n🔐 TEST CREDENTIALS:`);
-  console.log(`  Email: admin@insuraflow.com`);
-  console.log(`  Password: Admin@123`);
+  console.log(`\n🔐 TEST CREDENTIALS (with RBAC):`);
+  console.log(`  ADMIN:`);
+  console.log(`    Email: admin@insuraflow.com`);
+  console.log(`    Password: Admin@123`);
+  console.log(`    Permissions: All (create/read/update/delete on all resources)`);
+  console.log(`\n  AGENT:`);
+  console.log(`    Email: agent@insuraflow.com`);
+  console.log(`    Password: Agent@123`);
+  console.log(`    Permissions: Create/read/update (no delete); read audit logs`);
+  console.log(`\n  VIEWER:`);
+  console.log(`    Email: viewer@insuraflow.com`);
+  console.log(`    Password: Viewer@123`);
+  console.log(`    Permissions: Read-only access to clients, policies, renewals, audit logs`);
   console.log('\n');
 });
