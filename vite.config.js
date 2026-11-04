@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+const react = require('@vitejs/plugin-react');
 
-export default defineConfig({
-  plugins: [react()],
+module.exports = {
+  plugins: [react.default()],
+  root: './',
   build: {
     outDir: 'dist',
     sourcemap: false,
@@ -11,4 +11,4 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0'
   }
-})
+}
