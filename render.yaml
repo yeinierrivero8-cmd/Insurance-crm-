@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: indira-crm-backend
+    env: node
+    plan: standard
+    buildCommand: npm install
+    startCommand: npm run dev:backend
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        scope: all
+      - key: JWT_REFRESH_SECRET
+        scope: all
+      - key: DATABASE_URL
+        scope: all
+    disk:
+      name: insuraflow_db
+      mountPath: /var/data
+      sizeGB: 10
+
+  - type: web
+    name: indira-crm-frontend
+    env: static
+    staticSiteDir: dist
+    buildCommand: npm install && npm run build
+    envVars:
+      - key: VITE_API_URL
+        value: https://indira-crm-backend.onrender.com/api
+
+  - type: pserv
+    name: indira-postgres-db
+    plan: free
+    ipAllowList: []
+    envVars:
+      - key: POSTGRES_DB
+        value: indira_crm_db
+      - key: POSTGRES_USER
+        value: indira_user
+      - key: POSTGRES_PASSWORD
+        scope: all
