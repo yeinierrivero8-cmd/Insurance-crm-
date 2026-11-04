@@ -72,6 +72,20 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create refresh_tokens table (FASE 2)
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  is_revoked BOOLEAN DEFAULT false,
+  device_info VARCHAR(255),
+  ip_address VARCHAR(45),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMP,
+  UNIQUE(user_id, token_hash)
+);
+
 -- Create indexes
 CREATE INDEX idx_users_agency ON users(agency_id);
 CREATE INDEX idx_clients_agency ON clients(agency_id);
@@ -79,3 +93,6 @@ CREATE INDEX idx_policies_agency ON policies(agency_id);
 CREATE INDEX idx_renewals_agency ON renewals(agency_id);
 CREATE INDEX idx_audit_logs_user ON audit_logs(user_id);
 CREATE INDEX idx_audit_logs_timestamp ON audit_logs(timestamp);
+CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens(expires_at);
+CREATE INDEX idx_refresh_tokens_revoked ON refresh_tokens(is_revoked);

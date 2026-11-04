@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { Pool } = require('pg');
+const cookieParser = require('cookie-parser');
+const { authenticate } = require('./middleware/authMiddleware');
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Health check
 app.get('/health', (req, res) => {
@@ -36,21 +39,22 @@ app.get('/api/health/db', async (req, res) => {
   }
 });
 
-// Auth routes
+// Auth routes (public)
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+// Protected routes (require authentication)
 // Clients routes
 const clientRoutes = require('./routes/clients');
-app.use('/api/clients', clientRoutes);
+app.use('/api/clients', authenticate, clientRoutes);
 
 // Policies routes
 const policyRoutes = require('./routes/policies');
-app.use('/api/policies', policyRoutes);
+app.use('/api/policies', authenticate, policyRoutes);
 
 // Renewals routes
 const renewalRoutes = require('./routes/renewals');
-app.use('/api/renewals', renewalRoutes);
+app.use('/api/renewals', authenticate, renewalRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
