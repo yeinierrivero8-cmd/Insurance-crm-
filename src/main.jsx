@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-if (typeof window !== 'undefined') console.log('main.jsx loaded, React ready');
-import {
-  ShieldCheck, Bell, Users, CalendarDays, Clock3, FileCheck2, Coins,
-  Phone, MessageCircle, Mail, Search, SlidersHorizontal, ChevronLeft,
-  Plus, Home, MoreHorizontal, Target, ArrowUpRight, CheckCircle2,
-  BriefcaseBusiness, ChartNoAxesCombined, Globe, LogOut, Menu, X,
-  ChevronRight, ClipboardList, AlertCircle, Loader
-} from 'lucide-react';
-import { useApi } from './hooks/useApi.js';
-import { cacheService } from './lib/cacheService.js';
+console.log('main.jsx loaded');
 import './style.css';
 
 const API = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
@@ -118,6 +109,10 @@ const translations = {
 };
 
 function App() {
+  return <div style={{padding: '20px'}}><h1>Insurance CRM</h1><p>Login test</p><input type="email" placeholder="Email" /><input type="password" placeholder="Password" /><button>Sign In</button></div>;
+}
+
+function AppOld() {
   const [lang, setLang] = useState('es');
   const [page, setPage] = useState('welcome');
   const [selected, setSelected] = useState(null);
