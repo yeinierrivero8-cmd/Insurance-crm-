@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const dotenv = require('dotenv');
 const { Pool } = require('pg');
 const cookieParser = require('cookie-parser');
@@ -14,6 +15,7 @@ const pool = new Pool({
 
 // Middleware
 app.use(cors());
+app.use(compression({ threshold: 1024 })); // Gzip compression for responses > 1KB
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
