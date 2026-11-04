@@ -23,7 +23,7 @@ app.use(cookieParser());
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '1.0.1', timestamp: new Date().toISOString() });
 });
 
 // Database health check
