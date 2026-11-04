@@ -63,9 +63,13 @@ app.use('/api/renewals', authenticate, renewalRoutes);
 const distPath = path.resolve(__dirname, '../dist');
 app.use(express.static(distPath));
 
-// SPA fallback: redirect all non-API requests to index.html
+// SPA fallback: redirect all non-API non-static requests to index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
+  // Only serve index.html if file wasn't found by static middleware
+  res.status(404);
+  res.sendFile(path.join(distPath, 'index.html'), (err) => {
+    if (err) res.status(500).json({ error: 'File not found' });
+  });
 });
 
 // Error handler

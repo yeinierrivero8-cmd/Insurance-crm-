@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+if (typeof window !== 'undefined') console.log('main.jsx loaded, React ready');
 import {
   ShieldCheck, Bell, Users, CalendarDays, Clock3, FileCheck2, Coins,
   Phone, MessageCircle, Mail, Search, SlidersHorizontal, ChevronLeft,

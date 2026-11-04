@@ -28,5 +28,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
 }
