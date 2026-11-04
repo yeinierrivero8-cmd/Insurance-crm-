@@ -74,6 +74,23 @@ const hashToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+// Authentication middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-key');
+    req.user = { userId: decoded.userId, agencyId: decoded.agencyId, role: decoded.role };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
 // Auth login
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
@@ -181,21 +198,21 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // GET clients
-app.get('/api/clients', (req, res) => {
+app.get('/api/clients', authenticate, (req, res) => {
   const agencyId = parseInt(req.query.agencyId);
   const clients = db.clients.filter(c => c.agency_id === agencyId && !c.deleted_at);
   res.json(clients);
 });
 
 // GET client by id
-app.get('/api/clients/:id', (req, res) => {
+app.get('/api/clients/:id', authenticate, (req, res) => {
   const client = db.clients.find(c => c.id === parseInt(req.params.id) && !c.deleted_at);
   if (!client) return res.status(404).json({ error: 'Not found' });
   res.json(client);
 });
 
 // POST client
-app.post('/api/clients', (req, res) => {
+app.post('/api/clients', authenticate, (req, res) => {
   const { name, email, phone, type, status, agencyId } = req.body;
 
   if (!name || !agencyId) {
@@ -217,14 +234,14 @@ app.post('/api/clients', (req, res) => {
 });
 
 // GET renewals
-app.get('/api/renewals', (req, res) => {
+app.get('/api/renewals', authenticate, (req, res) => {
   const agencyId = parseInt(req.query.agencyId);
   const renewals = db.renewals.filter(r => r.agency_id === agencyId);
   res.json(renewals);
 });
 
 // PUT renewal
-app.put('/api/renewals/:id', (req, res) => {
+app.put('/api/renewals/:id', authenticate, (req, res) => {
   const renewal = db.renewals.find(r => r.id === parseInt(req.params.id));
   if (!renewal) return res.status(404).json({ error: 'Not found' });
 
