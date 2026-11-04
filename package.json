@@ -4,7 +4,6 @@
   "private": true,
   "description": "InsuraFlow CRM Enterprise - Insurance & Taxes Management",
   "main": "backend/server.js",
-  "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "dev:backend": "node backend/test-server.cjs",
