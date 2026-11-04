@@ -11,7 +11,7 @@ import { useApi } from './hooks/useApi.js';
 import { cacheService } from './lib/cacheService.js';
 import './style.css';
 
-const API = 'http://localhost:5000/api';
+const API = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
 
 const seed = [
   { id: 1, name: 'Juan Pérez', initials: 'JP', type: 'Salud (ACA)', date: '15 Dic 2026', status: 'Activo', color: 'blue', phone: '(786) 555-0147', email: 'juan@example.com' },
