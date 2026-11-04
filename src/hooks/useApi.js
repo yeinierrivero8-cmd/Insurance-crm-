@@ -6,18 +6,14 @@ import { cacheService } from '../lib/cacheService.js';
 const pendingRequests = new Map();
 
 export const useApi = (endpoint, options = {}) => {
+  // Always declare hooks at the top, in the same order (React rule)
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(endpoint ? true : false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // If no endpoint, don't fetch
-  if (!endpoint) {
-    return { data: null, loading: false, error: null, refetch: () => {} };
-  }
-
-  const cache = options.cache !== false; // Default: enabled
-  const dedupeWindow = options.dedupeWindow || 500; // ms
+  const cache = options.cache !== false;
+  const dedupeWindow = options.dedupeWindow || 500;
 
   const getErrorMessage = (err) => {
     if (err.message === 'Network request failed') {
@@ -37,17 +33,13 @@ export const useApi = (endpoint, options = {}) => {
       setLoading(true);
       setError(null);
 
-      // PHASE 1: Check cache
-      if (cache) {
-        const cached = cacheService.get(endpoint);
-        if (cached) {
-          setData(cached.data || cached);
-          setLoading(false);
-          return;
-        }
+      const cached = cache && cacheService.get(endpoint);
+      if (cached) {
+        setData(cached.data || cached);
+        setLoading(false);
+        return;
       }
 
-      // PHASE 2: Check pending dedup request
       if (pendingRequests.has(endpoint)) {
         const promise = pendingRequests.get(endpoint);
         const result = await promise;
@@ -56,20 +48,15 @@ export const useApi = (endpoint, options = {}) => {
         return;
       }
 
-      // PHASE 3: Fetch from network (create dedup promise)
       const fetchPromise = apiClient.get(endpoint);
       pendingRequests.set(endpoint, fetchPromise);
 
       const result = await fetchPromise;
-
-      // Cache the result
       if (cache) {
         cacheService.set(endpoint, result);
       }
 
       setData(result.data || result);
-
-      // Clean up dedup after window
       setTimeout(() => pendingRequests.delete(endpoint), dedupeWindow);
     } catch (err) {
       const errorMsg = getErrorMessage(err);
@@ -82,8 +69,11 @@ export const useApi = (endpoint, options = {}) => {
     }
   };
 
+  // Only fetch if endpoint exists
   useEffect(() => {
-    fetchData();
+    if (endpoint) {
+      fetchData();
+    }
   }, [endpoint]);
 
   const refetch = async () => {
