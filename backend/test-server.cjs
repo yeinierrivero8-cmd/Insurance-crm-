@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const LoginAttemptService = require('./services/LoginAttemptService.cjs');
 
 const app = express();
 app.use(cors());
@@ -92,18 +93,35 @@ const authenticate = (req, res, next) => {
 };
 
 // Auth login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
+  const agencyId = 1; // Default agency for test-server.cjs
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
 
+  // CHECK RATE LIMITING FIRST
+  const lockStatus = await LoginAttemptService.isAccountLocked(email, agencyId);
+  if (lockStatus.locked) {
+    return res.status(429).json({
+      error: 'too_many_attempts',
+      message: `Account temporarily locked for ${lockStatus.minutesRemaining} minute(s)`,
+      retryAfter: lockStatus.minutesRemaining * 60,
+      lockedUntil: lockStatus.lockedUntil.toISOString()
+    });
+  }
+
   const user = db.users.find(u => u.email === email && u.is_active);
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    // FAILED LOGIN: Record attempt
+    await LoginAttemptService.recordFailedAttempt(email, agencyId);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  // SUCCESS: Clear attempts
+  await LoginAttemptService.recordSuccessfulAttempt(email, agencyId);
 
   // Generate access token (24h)
   const accessToken = jwt.sign(
@@ -249,6 +267,43 @@ app.put('/api/renewals/:id', authenticate, (req, res) => {
   res.json(renewal);
 });
 
+// ============================================
+// TEST ENDPOINTS FOR RATE LIMITING DEBUG
+// ============================================
+
+// Reset rate limiting for a specific email
+app.post('/test/rate-limit/reset', (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'email required' });
+  }
+  LoginAttemptService.store.delete(`1:${email}`);
+  res.json({ reset: true, email });
+});
+
+// Check current attempt count for an email
+app.get('/test/rate-limit/status/:email', (req, res) => {
+  const record = LoginAttemptService.store.get(`1:${req.params.email}`);
+  res.json({
+    email: req.params.email,
+    attempts: record?.attempts || 0,
+    locked: record?.lockedUntil ? new Date(record.lockedUntil).toISOString() : null,
+    minutesRemaining: record?.lockedUntil ? Math.ceil((record.lockedUntil - Date.now()) / 60000) : null
+  });
+});
+
+// Simulate N failed login attempts
+app.post('/test/rate-limit/simulate-failures', async (req, res) => {
+  const { email, count = 5 } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'email required' });
+  }
+  for (let i = 0; i < count; i++) {
+    await LoginAttemptService.recordFailedAttempt(email, 1);
+  }
+  res.json({ simulated: count, email });
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err);
@@ -259,11 +314,16 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`\n✅ InsuraFlow API Test Server running on http://localhost:${PORT}`);
   console.log(`📊 Database: In-memory (test data)`);
-  console.log(`\n🧪 TEST ENDPOINTS:`);
+  console.log(`🔒 Rate Limiting: ENABLED (5 failed logins = 15min lockout)`);
+  console.log(`\n🧪 API ENDPOINTS:`);
   console.log(`  GET  http://localhost:${PORT}/health`);
   console.log(`  POST http://localhost:${PORT}/api/auth/login`);
   console.log(`  GET  http://localhost:${PORT}/api/clients?agencyId=1`);
   console.log(`  GET  http://localhost:${PORT}/api/renewals?agencyId=1`);
+  console.log(`\n🔑 RATE LIMIT TEST ENDPOINTS:`);
+  console.log(`  GET  http://localhost:${PORT}/test/rate-limit/status/:email`);
+  console.log(`  POST http://localhost:${PORT}/test/rate-limit/reset (email in body)`);
+  console.log(`  POST http://localhost:${PORT}/test/rate-limit/simulate-failures (email, count)`);
   console.log(`\n🔐 TEST CREDENTIALS:`);
   console.log(`  Email: admin@insuraflow.com`);
   console.log(`  Password: Admin@123`);
