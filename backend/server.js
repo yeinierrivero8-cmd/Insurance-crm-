@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const dotenv = require('dotenv');
+const path = require('path');
 const { Pool } = require('pg');
 const cookieParser = require('cookie-parser');
 const { authenticate } = require('./middleware/authMiddleware');
@@ -57,6 +58,14 @@ app.use('/api/policies', authenticate, policyRoutes);
 // Renewals routes
 const renewalRoutes = require('./routes/renewals');
 app.use('/api/renewals', authenticate, renewalRoutes);
+
+// Serve static files from dist folder (frontend build)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// SPA fallback: redirect all non-API requests to index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
 
 // Error handler
 app.use((err, req, res, next) => {

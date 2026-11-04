@@ -1,42 +1,15 @@
 services:
   - type: web
-    name: insurance-crm-backend
+    name: insurance-crm
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 5000
-      - key: DATABASE_URL
-        fromDatabase:
-          name: insurance-postgres
-          property: connectionString
+        value: 10000
       - key: JWT_SECRET
         generateValue: true
     autoDeploy: false
-
-  - type: web
-    name: insurance-crm-frontend
-    runtime: static
-    plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://insurance-crm-backend.onrender.com
-    autoDeploy: false
-
-  - type: pserv
-    name: insurance-postgres
-    plan: free
-    ipAllowList: []
-    envVars:
-      - key: POSTGRES_USER
-        value: insurance_user
-      - key: POSTGRES_PASSWORD
-        generateValue: true
-      - key: POSTGRES_DB
-        value: insurance_crm
