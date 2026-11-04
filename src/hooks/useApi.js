@@ -7,9 +7,14 @@ const pendingRequests = new Map();
 
 export const useApi = (endpoint, options = {}) => {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(endpoint ? true : false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  // If no endpoint, don't fetch
+  if (!endpoint) {
+    return { data: null, loading: false, error: null, refetch: () => {} };
+  }
 
   const cache = options.cache !== false; // Default: enabled
   const dedupeWindow = options.dedupeWindow || 500; // ms

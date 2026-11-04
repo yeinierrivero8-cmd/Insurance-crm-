@@ -143,9 +143,10 @@ function App() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   // API hooks - FASE 2: Conectar a datos reales
-  const { data: clients = [], loading: clientsLoading, error: clientsError, refetch: refetchClients } = useApi('/clients?agencyId=1');
-  const { data: policies = [], loading: policiesLoading, error: policiesError, refetch: refetchPolicies } = useApi('/policies?agencyId=1');
-  const { data: renewals = [], loading: renewalsLoading, error: renewalsError, refetch: refetchRenewals } = useApi('/renewals?agencyId=1');
+  // Only fetch when user is authenticated
+  const { data: clients = [], loading: clientsLoading, error: clientsError, refetch: refetchClients } = useApi(user ? '/clients?agencyId=1' : null);
+  const { data: policies = [], loading: policiesLoading, error: policiesError, refetch: refetchPolicies } = useApi(user ? '/policies?agencyId=1' : null);
+  const { data: renewals = [], loading: renewalsLoading, error: renewalsError, refetch: refetchRenewals } = useApi(user ? '/renewals?agencyId=1' : null);
 
   // Set selected client to first client when data loads
   useEffect(() => {
