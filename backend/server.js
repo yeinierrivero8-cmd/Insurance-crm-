@@ -24,6 +24,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Root route - serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.1', timestamp: new Date().toISOString() });
