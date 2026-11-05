@@ -66,7 +66,8 @@ const renewalRoutes = require('./routes/renewals');
 app.use('/api/renewals', authenticate, renewalRoutes);
 
 // Serve static files from dist folder (frontend build)
-const distPath = path.resolve(__dirname, '../dist');
+const distPath = path.resolve(__dirname, '..', 'dist');
+console.log('📁 Serving static files from:', distPath);
 app.use(express.static(distPath));
 
 // SPA fallback: redirect all non-API non-static requests to index.html
