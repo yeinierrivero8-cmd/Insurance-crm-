@@ -31,7 +31,7 @@ router.put('/:id', async (req, res) => {
     const { status } = req.body;
 
     const result = await pool.query(
-      `UPDATE renewals SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`,
+      `UPDATE renewals SET status = $1, updated_at = DATETIME('now') WHERE id = $2 RETURNING *`,
       [status, id]
     );
 

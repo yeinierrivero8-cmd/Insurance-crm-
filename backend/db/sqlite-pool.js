@@ -30,10 +30,11 @@ const pool = {
           sqlParams = params;
         }
 
-        // Determine if this is a SELECT or INSERT/UPDATE/DELETE
+        // Check if query contains RETURNING (for INSERT/UPDATE with RETURNING *)
+        const hasReturning = sqliteQuery.toUpperCase().includes('RETURNING');
         const isSelect = sql.trim().toUpperCase().startsWith('SELECT');
 
-        if (isSelect) {
+        if (isSelect || hasReturning) {
           db.all(sqliteQuery, sqlParams, (err, rows) => {
             if (err) {
               console.error('SQLite Query Error:', err.message, 'SQL:', sql);

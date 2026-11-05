@@ -79,7 +79,10 @@ async function initDatabase() {
         zip_code TEXT,
         type TEXT DEFAULT 'personal',
         status TEXT DEFAULT 'active',
+        notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        deleted_at DATETIME,
         FOREIGN KEY (agency_id) REFERENCES agencies(id)
       )
     `);
@@ -110,9 +113,11 @@ async function initDatabase() {
         client_id INTEGER NOT NULL,
         agency_id INTEGER NOT NULL,
         renewal_date DATE,
+        due_date DATE,
         status TEXT DEFAULT 'pending',
         commission DECIMAL(10, 2),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (policy_id) REFERENCES policies(id),
         FOREIGN KEY (client_id) REFERENCES clients(id),
         FOREIGN KEY (agency_id) REFERENCES agencies(id)

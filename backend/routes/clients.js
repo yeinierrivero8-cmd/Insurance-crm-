@@ -73,7 +73,7 @@ router.put('/:id', async (req, res) => {
            type = COALESCE($4, type),
            status = COALESCE($5, status),
            notes = COALESCE($6, notes),
-           updated_at = CURRENT_TIMESTAMP
+           updated_at = DATETIME('now')
        WHERE id = $7
        RETURNING *`,
       [name, email, phone, type, status, notes, id]

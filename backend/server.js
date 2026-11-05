@@ -35,7 +35,7 @@ app.get('/api/health/db', async (req, res) => {
     return res.json({ status: 'no-database-url', message: 'DATABASE_URL not configured' });
   }
   try {
-    const result = await pool.query('SELECT NOW()');
+    const result = await pool.query("SELECT DATETIME('now') as now");
     res.json({
       status: 'connected',
       timestamp: result.rows[0].now
