@@ -13,6 +13,29 @@
   --primary-lighter: #F0F6FF;
   --primary-disabled: #B8CCEE;
 
+  /* ===== NEW COLOR PALETTE (Premium Redesign) ===== */
+  --color-blue-primary: #1D4ED8;
+  --color-blue-light: #2563EB;
+  --color-green-success: #059669;
+  --color-green-light: #10B981;
+  --color-orange-warning: #D97706;
+  --color-orange-light: #F59E0B;
+  --color-lavender: #A78BFA;
+  --color-lavender-light: #C4B5FD;
+  --color-slate-50: #F8F9FA;
+  --color-slate-100: #F1F5F9;
+  --color-slate-500: #64748B;
+  --color-slate-700: #334155;
+  --color-slate-900: #0F172A;
+  --color-border-subtle: #E2E8F0;
+  --color-border-active: #CBD5E1;
+
+  /* ===== NEW SPACING SCALE ===== */
+  --gap-sm: 12px;
+  --gap-md: 16px;
+  --gap-lg: 20px;
+  --gap-xl: 24px;
+
   /* ===== ACCENT COLOR PALETTE ===== */
   --lavender-soft: #F1EDFF;
   --lavender-accent: #9333EA;
