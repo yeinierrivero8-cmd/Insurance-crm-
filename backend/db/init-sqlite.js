@@ -210,8 +210,53 @@ async function seedData() {
     );
 
     console.log('✅ Seed data created successfully');
+
+    // Create database indexes for performance
+    await createIndexes();
   } catch (error) {
     console.error('❌ Error seeding data:', error.message);
+  }
+}
+
+// Create database indexes for performance optimization
+async function createIndexes() {
+  try {
+    console.log('Creating database indexes for performance...');
+
+    // Clients table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_agency ON clients(agency_id, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_search ON clients(agency_id, name, email, phone)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_created ON clients(agency_id, created_at)');
+
+    // Policies table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_agency ON policies(agency_id, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_expiry ON policies(expiry_date, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_client ON policies(client_id)');
+
+    // Renewals table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_agency ON renewals(agency_id, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_due ON renewals(due_date, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_client ON renewals(client_id)');
+
+    // Users table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_users_agency ON users(agency_id)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+
+    // Refresh tokens indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id, expires_at)');
+
+    // Commissions table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_commissions_agency ON commissions(agency_id, date)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_commissions_client ON commissions(client_id)');
+
+    // Quotes table indexes
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_quotes_agency ON quotes(agency_id, created_at)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_quotes_client ON quotes(client_id)');
+
+    console.log('✅ Database indexes created successfully');
+  } catch (error) {
+    console.error('❌ Error creating indexes:', error.message);
+    // Don't throw - indexes failing shouldn't stop db init
   }
 }
 

@@ -130,6 +130,10 @@ app.use('/api/import', authenticate, importRoutes);
 const exportRoutes = require('./routes/export');
 app.use('/api/export', authenticate, exportRoutes);
 
+// Dashboard routes
+const dashboardRoutes = require('./routes/dashboard');
+app.use('/api/dashboard', authenticate, dashboardRoutes);
+
 // Serve static files from dist folder (frontend build)
 const distPath = path.resolve(__dirname, '..', 'dist');
 console.log('📁 Serving static files from:', distPath);

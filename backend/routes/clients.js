@@ -6,22 +6,72 @@ const { validateClientInput } = require('../middleware/inputValidator');
 const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
-// GET /api/clients - Solo ver clientes de su agencia
+// GET /api/clients - Listar clientes con paginación, búsqueda y filtrado
+// Query params: limit=50, offset=0, search=query, status=active, sort=name:asc
 router.get('/', authenticate, allowedRoles(['admin', 'agent', 'viewer']), async (req, res) => {
   try {
     // Validación crítica: usuario solo puede ver su propia agencia
-    if (req.user.agencyId) {
-      const result = await pool.query(
-        `SELECT * FROM clients
-         WHERE agency_id = $1 AND deleted_at IS NULL
-         ORDER BY created_at DESC`,
-        [req.user.agencyId]
-      );
-
-      res.json(result.rows);
-    } else {
-      res.status(403).json({ error: 'No tienes acceso a clientes' });
+    if (!req.user.agencyId) {
+      return res.status(403).json({ error: 'No tienes acceso a clientes' });
     }
+
+    // Parse query parameters
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 500); // 1-500, default 50
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0); // default 0
+    const search = (req.query.search || '').trim();
+    const status = (req.query.status || '').trim();
+    const sort = (req.query.sort || 'created_at:desc').trim();
+
+    // Parse sort parameter (format: field:direction)
+    const [sortField, sortDir] = sort.split(':');
+    const validSortFields = ['name', 'email', 'phone', 'type', 'status', 'created_at', 'updated_at'];
+    const sortColumn = validSortFields.includes(sortField) ? sortField : 'created_at';
+    const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
+
+    // Build WHERE clause with search and status filter
+    let whereConditions = ['agency_id = $1', 'deleted_at IS NULL'];
+    let params = [req.user.agencyId];
+
+    if (search) {
+      whereConditions.push(
+        `(name LIKE $${params.length + 1} OR email LIKE $${params.length + 1} OR phone LIKE $${params.length + 1})`
+      );
+      params.push(`%${search}%`);
+    }
+
+    if (status) {
+      whereConditions.push(`status = $${params.length + 1}`);
+      params.push(status);
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
+    // Get total count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as count FROM clients WHERE ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get paginated results
+    const pageParams = [...params, limit, offset];
+    const result = await pool.query(
+      `SELECT * FROM clients
+       WHERE ${whereClause}
+       ORDER BY ${sortColumn} ${sortDirection}
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      pageParams
+    );
+
+    res.json({
+      data: result.rows,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+      pageCount: Math.ceil(total / limit),
+      currentPage: Math.floor(offset / limit) + 1
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
