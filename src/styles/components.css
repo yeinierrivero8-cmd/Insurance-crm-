@@ -438,3 +438,59 @@
     font-size: var(--text-base);
   }
 }
+
+/* ========== LOGIN BUTTONS ========== */
+button.primary {
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-bold);
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: all var(--duration-150) var(--easing-in-out);
+  box-shadow: var(--shadow-md);
+}
+
+button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+button.primary:active {
+  transform: translateY(0);
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button.outline {
+  display: block;
+  width: 100%;
+  padding: var(--space-4);
+  margin-top: var(--space-3);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-bold);
+  font-size: var(--text-base);
+  cursor: pointer;
+  transition: all var(--duration-150) var(--easing-in-out);
+}
+
+button.outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+button.outline:active {
+  transform: translateY(0);
+}
