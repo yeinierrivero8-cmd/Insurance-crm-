@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useApi } from './hooks/useApi';
 import { Home, Users, ShieldCheck, CalendarDays, Coins, Phone, MessageCircle, Mail, Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader, AlertCircle, ClipboardList, Bell, Globe, LogOut, Clock3, Target, MoreHorizontal, BriefcaseBusiness, ChartNoAxesCombined } from 'lucide-react';
+import './styles/index.css';
 console.log('main.jsx loaded');
-// import './style.css';
 
 const API = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
 

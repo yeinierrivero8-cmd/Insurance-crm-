@@ -13,7 +13,16 @@
     "db:seed": "node backend/db/seed.js",
     "db:reset": "npm run db:seed",
     "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "test": "playwright test e2e/insuraflow.spec.ts",
+    "test:headed": "playwright test e2e/insuraflow.spec.ts --headed",
+    "test:debug": "playwright test e2e/insuraflow.spec.ts --debug",
+    "test:report": "playwright show-report",
+    "test:auth": "playwright test -g \"Suite 1: Authentication\"",
+    "test:rbac": "playwright test -g \"Suite 3: RBAC\" || playwright test -g \"Suite 4: RBAC\"",
+    "test:crud": "playwright test -g \"Suite 5: CRUD\"",
+    "test:update-snapshots": "playwright test e2e/insuraflow.spec.ts --update-snapshots",
+    "test:ci": "npm run build && npm run test"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.2.1",
