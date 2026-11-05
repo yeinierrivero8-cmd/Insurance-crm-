@@ -171,7 +171,7 @@ router.post('/refresh', async (req, res) => {
 
     // Update last_used_at
     await pool.query(
-      `UPDATE refresh_tokens SET last_used_at = NOW() WHERE id = $1`,
+      `UPDATE refresh_tokens SET last_used_at = DATETIME('now') WHERE id = $1`,
       [storedToken.id]
     );
 

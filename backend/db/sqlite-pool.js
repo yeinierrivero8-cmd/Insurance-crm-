@@ -20,14 +20,11 @@ const pool = {
       try {
         // Convert PostgreSQL placeholders ($1, $2) to ? for SQLite
         let sqliteQuery = sql;
-        let sqlParams = [];
+        let sqlParams = params;
 
         if (sql.includes('$')) {
-          // Replace $1, $2, $3... with ? and reorder params
+          // Replace $1, $2, $3... with ? in order (maintain param order)
           sqliteQuery = sql.replace(/\$\d+/g, () => '?');
-          sqlParams = params;
-        } else {
-          sqlParams = params;
         }
 
         // Check if query contains RETURNING (for INSERT/UPDATE with RETURNING *)

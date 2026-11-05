@@ -133,6 +133,8 @@ async function initDatabase() {
         expires_at DATETIME NOT NULL,
         device_info TEXT,
         ip_address TEXT,
+        is_revoked BOOLEAN DEFAULT 0,
+        last_used_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
       )
