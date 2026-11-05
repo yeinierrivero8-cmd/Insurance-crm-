@@ -1026,9 +1026,36 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outli
   margin-top: 16px;
 }
 
-.calendar-grid b { font-size: 11px; color: var(--text-secondary); font-weight: 700; }
+.calendar-grid b {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 0;
+  color: var(--text-secondary);
+}
 .calendar-grid span { font-size: 12px; padding: 8px 0; }
 .calendar-grid .today { background: var(--primary); color: white; border-radius: 8px; font-weight: 700; }
+
+@media (min-width: 768px) {
+  .calendar-grid {
+    gap: 8px;
+  }
+
+  .calendar-grid span {
+    font-size: 14px;
+    padding: 14px 6px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .calendar-grid {
+    gap: 10px;
+  }
+
+  .calendar-grid span {
+    font-size: 15px;
+    padding: 16px 8px;
+  }
+}
 
 .settings-card {
   background: var(--surface-bg);
@@ -1064,7 +1091,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outli
   background: none;
   border: 0;
   border-bottom: 1px solid var(--border-color);
-  padding: 18px 4px;
+  padding: 18px 14px;
   text-align: left;
   font-size: 13px;
   color: var(--text-primary);
