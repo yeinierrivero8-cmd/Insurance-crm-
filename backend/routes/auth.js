@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../db/sqlite-pool');
+const auditLog = require('../middleware/auditLogger');
 
 // Helper: Generate refresh token with SHA256 hash
 const generateRefreshToken = () => {
@@ -29,6 +30,7 @@ router.post('/login', async (req, res) => {
     );
 
     if (userRes.rows.length === 0) {
+      auditLog(req, 'LOGIN_FAILED_USER_NOT_FOUND', { email });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -36,6 +38,7 @@ router.post('/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password_hash);
 
     if (!validPassword) {
+      auditLog(req, 'LOGIN_FAILED_INVALID_PASSWORD', { email });
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -72,12 +75,15 @@ router.post('/login', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
+    auditLog(req, 'LOGIN_SUCCESS', { email, userId: user.id, role: user.role });
+
     res.json({
       accessToken,
       refreshToken,
       user: { id: user.id, email: user.email, name: user.name, role: user.role }
     });
   } catch (error) {
+    auditLog(req, 'LOGIN_ERROR', { email, error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
@@ -107,14 +113,18 @@ router.post('/register', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    auditLog(req, 'USER_REGISTERED', { userId: user.id, email, name });
+
     res.status(201).json({
       accessToken,
       user
     });
   } catch (error) {
     if (error.code === '23505') {
+      auditLog(req, 'REGISTER_FAILED_EMAIL_EXISTS', { email });
       res.status(409).json({ error: 'Email already exists' });
     } else {
+      auditLog(req, 'REGISTER_ERROR', { email, error: error.message });
       res.status(500).json({ error: error.message });
     }
   }
@@ -201,8 +211,11 @@ router.post('/logout', async (req, res) => {
     // Clear cookie
     res.clearCookie('refreshToken');
 
+    auditLog(req, 'LOGOUT_SUCCESS', { message: 'User logged out' });
+
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
+    auditLog(req, 'LOGOUT_ERROR', { error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
