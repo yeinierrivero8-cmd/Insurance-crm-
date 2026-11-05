@@ -443,13 +443,6 @@ function AppOld() {
                 </button>
               </form>
 
-              <div className="login-footer">
-                <p><strong>Test Credentials:</strong></p>
-                <p>📧 admin@insuraflow.com / Admin@123</p>
-                <p>📧 agent@insuraflow.com / Agent@123</p>
-                <p>📧 viewer@insuraflow.com / Viewer@123</p>
-              </div>
-
               <div className="language">
                 <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
                 <i />
