@@ -35,7 +35,7 @@
   position: relative;
   border: 0;
   border-radius: 0;
-  background: linear-gradient(135deg, #0f1729 0%, #1a2847 50%, var(--bg-secondary) 95%);
+  background: radial-gradient(ellipse at 65% 0%, rgba(211, 228, 255, 0.48), transparent 45%), var(--bg-primary);
   box-shadow: none;
   display: grid;
   grid-template-columns: 1fr;
