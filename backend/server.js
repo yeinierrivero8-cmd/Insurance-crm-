@@ -12,12 +12,6 @@ dotenv.config();
 
 const app = express();
 
-// Initialize SQLite database before starting server
-initDatabase().catch(err => {
-  console.error('Failed to initialize database:', err.message);
-  process.exit(1);
-});
-
 // Middleware
 app.use(cors());
 app.use(compression({ threshold: 1024 })); // Gzip compression for responses > 1KB
