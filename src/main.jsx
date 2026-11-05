@@ -771,8 +771,6 @@ function AppOld() {
           </div>
         )}
 
-        <div className="desktop-note"><ShieldCheck size={19} /> INSURAFLOW CRM <span>Premium mobile-first UI · Demo visual</span></div>
-
         {toast && (
           <div style={{
             position: 'fixed',
