@@ -60,6 +60,9 @@ async function initDatabase() {
         name TEXT NOT NULL,
         role TEXT DEFAULT 'agent',
         is_active BOOLEAN DEFAULT TRUE,
+        two_factor_enabled BOOLEAN DEFAULT 0,
+        two_factor_secret TEXT,
+        backup_codes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (agency_id) REFERENCES agencies(id)
       )

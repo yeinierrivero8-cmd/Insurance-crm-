@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
+const { generateSecret, verifyToken, generateQRCode } = require('../utils/twoFactor');
+const authenticate = require('../middleware/authMiddleware');
 
 // Helper: Generate refresh token with SHA256 hash
 const generateRefreshToken = () => {
@@ -42,6 +44,23 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // SI 2FA está activado, retornar token temporal
+    if (user.two_factor_enabled) {
+      const tempToken = jwt.sign(
+        { userId: user.id, temp2FA: true },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '5m' } // Solo válido 5 minutos
+      );
+
+      auditLog(req, 'LOGIN_2FA_REQUIRED', { email });
+      return res.json({
+        requiresOTP: true,
+        tempToken: tempToken,
+        userId: user.id
+      });
+    }
+
+    // SIN 2FA, login normal
     // Generate access token (24h)
     const accessToken = jwt.sign(
       { userId: user.id, agencyId: user.agency_id, role: user.role },
@@ -244,6 +263,202 @@ router.get('/sessions', async (req, res) => {
     res.json(sessionsRes.rows);
   } catch (error) {
     res.status(401).json({ error: error.message });
+  }
+});
+
+// ===================== 2FA ENDPOINTS =====================
+
+// POST /api/auth/2fa/setup - Generar código QR para 2FA
+router.post('/2fa/setup', authenticate, async (req, res) => {
+  try {
+    const secret = generateSecret(req.user.email);
+    const qrCode = await generateQRCode(secret);
+
+    // Generar 10 backup codes
+    const backupCodes = Array.from({ length: 10 }, () =>
+      Math.random().toString(36).substring(2, 10).toUpperCase()
+    );
+
+    res.json({
+      qrCode,
+      secret: secret.base32,
+      backupCodes
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/2fa/verify - Verificar y activar 2FA
+router.post('/2fa/verify', authenticate, async (req, res) => {
+  try {
+    const { secret, token, backupCodes } = req.body;
+
+    if (!secret || !token || !backupCodes) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Verificar token TOTP
+    if (!verifyToken(secret, token)) {
+      return res.status(400).json({ error: 'Token inválido' });
+    }
+
+    // Guardar secret en BD
+    await pool.query(
+      `UPDATE users
+       SET two_factor_enabled = 1,
+           two_factor_secret = $1,
+           backup_codes = $2
+       WHERE id = $3`,
+      [secret, JSON.stringify(backupCodes), req.user.id]
+    );
+
+    auditLog(req, '2FA_ENABLED', { userId: req.user.id });
+    res.json({ message: '2FA activado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/2fa/disable - Desactivar 2FA
+router.post('/2fa/disable', authenticate, async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Contraseña requerida' });
+    }
+
+    // Verificar contraseña
+    const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const user = userRes.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Contraseña incorrecta' });
+    }
+
+    await pool.query(
+      `UPDATE users
+       SET two_factor_enabled = 0,
+           two_factor_secret = NULL,
+           backup_codes = NULL
+       WHERE id = $1`,
+      [req.user.id]
+    );
+
+    auditLog(req, '2FA_DISABLED', { userId: req.user.id });
+    res.json({ message: '2FA desactivado' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/2fa/verify-login - Verificar token durante login
+router.post('/2fa/verify-login', async (req, res) => {
+  try {
+    const { userId, token } = req.body;
+
+    if (!userId || !token) {
+      return res.status(400).json({ error: 'userId y token requeridos' });
+    }
+
+    const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: 'Usuario no encontrado' });
+    }
+
+    const userData = userRes.rows[0];
+
+    // Verificar token TOTP
+    if (verifyToken(userData.two_factor_secret, token)) {
+      // Token válido, generar acceso completo
+      const accessToken = jwt.sign(
+        { userId: userData.id, agencyId: userData.agency_id, role: userData.role },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      // Generar refresh token
+      const refreshToken = generateRefreshToken();
+      const tokenHash = hashToken(refreshToken);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      await pool.query(
+        `INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_info, ip_address)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          userData.id,
+          tokenHash,
+          expiresAt,
+          req.headers['user-agent'] || 'unknown',
+          req.ip || req.connection.remoteAddress
+        ]
+      );
+
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
+
+      auditLog(req, '2FA_VERIFICATION_SUCCESS', { userId });
+      return res.json({ accessToken, refreshToken });
+    }
+
+    // Verificar contra backup codes
+    const backupCodes = JSON.parse(userData.backup_codes || '[]');
+    if (backupCodes.includes(token)) {
+      // Remover código usado
+      const remaining = backupCodes.filter(code => code !== token);
+      await pool.query(
+        'UPDATE users SET backup_codes = $1 WHERE id = $2',
+        [JSON.stringify(remaining), userId]
+      );
+
+      const accessToken = jwt.sign(
+        { userId: userData.id, agencyId: userData.agency_id, role: userData.role },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      // Generar refresh token
+      const refreshToken = generateRefreshToken();
+      const tokenHash = hashToken(refreshToken);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      await pool.query(
+        `INSERT INTO refresh_tokens (user_id, token_hash, expires_at, device_info, ip_address)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          userData.id,
+          tokenHash,
+          expiresAt,
+          req.headers['user-agent'] || 'unknown',
+          req.ip || req.connection.remoteAddress
+        ]
+      );
+
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
+
+      auditLog(req, '2FA_BACKUP_CODE_USED', { userId });
+      return res.json({ accessToken, refreshToken });
+    }
+
+    res.status(401).json({ error: 'Token 2FA inválido' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
