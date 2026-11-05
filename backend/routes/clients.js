@@ -1,15 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db/sqlite-pool');
+const auditLog = require('../middleware/auditLogger');
+const { validateClientInput } = require('../middleware/inputValidator');
 
 // GET /api/clients
 router.get('/', async (req, res) => {
   try {
     const { agencyId } = req.query;
-    if (!agencyId) return res.status(400).json({ error: 'agencyId required' });
+    if (!agencyId) return res.status(400).json({ error: 'agencyId is required' });
+
+    // Validate agencyId is a number
+    if (isNaN(agencyId)) {
+      return res.status(400).json({ error: 'agencyId must be a valid number' });
+    }
 
     const result = await pool.query(
-      'SELECT * FROM clients WHERE agency_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM clients WHERE agency_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
       [agencyId]
     );
 
@@ -39,31 +46,45 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/clients
-router.post('/', async (req, res) => {
+router.post('/', validateClientInput, async (req, res) => {
   try {
     const { name, email, phone, type, status, agencyId, notes } = req.body;
 
-    if (!name || !agencyId) {
-      return res.status(400).json({ error: 'name and agencyId required' });
+    if (!agencyId) {
+      return res.status(400).json({ error: 'agencyId is required' });
+    }
+
+    // Validate agencyId is a number
+    if (isNaN(agencyId)) {
+      return res.status(400).json({ error: 'agencyId must be a valid number' });
     }
 
     const result = await pool.query(
       `INSERT INTO clients (name, email, phone, type, status, agency_id, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, email, phone, type || 'prospect', status || 'active', agencyId, notes]
+      [name, email, phone, type || 'personal', status || 'active', agencyId, notes]
     );
+
+    // Log the action
+    auditLog(req, 'CLIENT_CREATED', { clientId: result.rows[0].id, name, email });
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    auditLog(req, 'CLIENT_CREATE_FAILED', { error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
 
 // PUT /api/clients/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateClientInput, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, type, status, notes } = req.body;
+
+    // Validate id is a number
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid client ID' });
+    }
 
     const result = await pool.query(
       `UPDATE clients
@@ -83,8 +104,12 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Client not found' });
     }
 
+    // Log the action
+    auditLog(req, 'CLIENT_UPDATED', { clientId: id, changes: { name, email, phone, type, status } });
+
     res.json(result.rows[0]);
   } catch (error) {
+    auditLog(req, 'CLIENT_UPDATE_FAILED', { clientId: id, error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
@@ -94,8 +119,13 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Validate id is a number
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid client ID' });
+    }
+
     const result = await pool.query(
-      `UPDATE clients SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+      `UPDATE clients SET deleted_at = DATETIME('now') WHERE id = $1 RETURNING *`,
       [id]
     );
 
@@ -103,8 +133,12 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    res.json({ message: 'Client deleted' });
+    // Log the action
+    auditLog(req, 'CLIENT_DELETED', { clientId: id, clientName: result.rows[0].name });
+
+    res.json({ message: 'Client deleted successfully' });
   } catch (error) {
+    auditLog(req, 'CLIENT_DELETE_FAILED', { clientId: id, error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
