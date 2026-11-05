@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
-const authenticate = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
 // GET /api/renewals - Solo ver renovaciones de su agencia

@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
 const { generateSecret, verifyToken, generateQRCode } = require('../utils/twoFactor');
-const authenticate = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 
 // Helper: Generate refresh token with SHA256 hash
 const generateRefreshToken = () => {

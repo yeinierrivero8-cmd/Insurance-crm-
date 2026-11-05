@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
 const { validateClientInput } = require('../middleware/inputValidator');
-const authenticate = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
 // GET /api/clients - Solo ver clientes de su agencia

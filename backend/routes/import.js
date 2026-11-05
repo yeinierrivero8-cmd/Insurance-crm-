@@ -6,7 +6,7 @@ const fs = require('fs');
 const { pool } = require('../db/sqlite-pool');
 const { parseExcel, parseCSV, validateClientRow } = require('../middleware/fileParser');
 const auditLog = require('../middleware/auditLogger');
-const authenticate = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
 // Create uploads directory if it doesn't exist

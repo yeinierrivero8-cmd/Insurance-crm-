@@ -4,7 +4,7 @@ const xlsx = require('xlsx');
 const PDFDocument = require('pdfkit');
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
-const authenticate = require('../middleware/authMiddleware');
+const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
 // Helper to get all clients for a given agency
