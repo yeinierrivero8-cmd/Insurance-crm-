@@ -3,7 +3,7 @@ services:
     name: insurance-crm
     runtime: node
     plan: free
-    buildCommand: rm -rf dist node_modules && npm install && npm run build
+    buildCommand: set -x && ls -la vite.config.* && rm -rf dist node_modules && npm install && npm run build && echo "✓ Build complete" && ls -la dist/
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
