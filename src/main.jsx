@@ -468,28 +468,30 @@ function AppOld() {
         <div className="status"><span>9:41</span><span>●●● ▰</span></div>
 
         {page === 'welcome' ? (
-          <div className="welcome">
-            <div className="welcome-glow" />
-            <div className="brand-center">
-              <div className="big-shield"><ShieldCheck size={74} strokeWidth={1.7} /></div>
-              <h1>Insurance <span>CRM</span></h1>
-              <p>{t.tagline}</p>
-            </div>
-            <div className="welcome-lower">
-              <div className="features">
-                {[[Users, t.feature1], [CalendarDays, t.feature2], [BriefcaseBusiness, t.feature3], [ChartNoAxesCombined, t.feature4]].map(([Icon, label]) =>
-                  <div key={label}><Icon size={22} /><span>{label}</span></div>
-                )}
+          <main className="content white-content">
+            <div className="welcome">
+              <div className="welcome-glow" />
+              <div className="brand-center">
+                <div className="big-shield"><ShieldCheck size={74} strokeWidth={1.7} /></div>
+                <h1>Insurance <span>CRM</span></h1>
+                <p>{t.tagline}</p>
               </div>
-              <button className="primary wide" onClick={() => navigate('login')}>{t.login}</button>
-              <button className="outline wide" onClick={() => navigate('login')}>{t.register}</button>
-              <div className="language">
-                <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
-                <i />
-                <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+              <div className="welcome-lower">
+                <div className="features">
+                  {[[Users, t.feature1], [CalendarDays, t.feature2], [BriefcaseBusiness, t.feature3], [ChartNoAxesCombined, t.feature4]].map(([Icon, label]) =>
+                    <div key={label}><Icon size={22} /><span>{label}</span></div>
+                  )}
+                </div>
+                <button className="primary wide" onClick={() => navigate('login')}>{t.login}</button>
+                <button className="outline wide" onClick={() => navigate('login')}>{t.register}</button>
+                <div className="language">
+                  <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
+                  <i />
+                  <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+                </div>
               </div>
             </div>
-          </div>
+          </main>
         ) : page === 'login' ? (
           <div className="login-page">
             <div className="login-container">
