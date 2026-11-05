@@ -2,6 +2,156 @@
    INSURAFLOW CRM - PAGE STYLES
    ===================================================== */
 
+/* ========== WELCOME PAGE ========== */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: var(--space-8) var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-glow {
+  position: absolute;
+  top: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(23, 105, 232, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.brand-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+  z-index: 2;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.big-shield {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary-soft) 0%, rgba(23, 105, 232, 0.08) 100%);
+  border-radius: var(--radius-lg);
+  color: var(--primary);
+  margin-bottom: var(--space-2);
+}
+
+.brand-center h1 {
+  margin: 0;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: var(--font-extrabold);
+  color: var(--text-primary);
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.brand-center h1 span {
+  color: var(--primary);
+}
+
+.brand-center p {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  max-width: 400px;
+}
+
+.welcome-lower {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 380px;
+  z-index: 2;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.features > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: all var(--duration-200) var(--easing-in-out);
+}
+
+.features > div:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(23, 105, 232, 0.1);
+}
+
+.features svg {
+  color: var(--primary);
+  width: 28px;
+  height: 28px;
+}
+
+.features span {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.language {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.language button {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--duration-150) var(--easing-in-out);
+  border-radius: var(--radius-md);
+}
+
+.language button:hover {
+  color: var(--primary);
+}
+
+.language button.chosen {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.language i {
+  width: 1px;
+  height: 20px;
+  background: var(--border-default);
+}
+
 /* ========== DASHBOARD / HOME PAGE ========== */
 .dashboard {
   padding: var(--space-6);
