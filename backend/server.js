@@ -10,9 +10,12 @@ const { authenticate } = require('./middleware/authMiddleware');
 dotenv.config();
 
 const app = express();
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
+let pool = null;
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+}
 
 // Middleware
 app.use(cors());
@@ -28,6 +31,9 @@ app.get('/health', (req, res) => {
 
 // Database health check
 app.get('/api/health/db', async (req, res) => {
+  if (!pool) {
+    return res.json({ status: 'no-database-url', message: 'DATABASE_URL not configured' });
+  }
   try {
     const result = await pool.query('SELECT NOW()');
     res.json({
