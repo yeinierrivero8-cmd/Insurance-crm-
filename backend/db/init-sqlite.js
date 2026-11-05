@@ -223,35 +223,35 @@ async function createIndexes() {
   try {
     console.log('Creating database indexes for performance...');
 
-    // Clients table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_agency ON clients(agency_id, status)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_search ON clients(agency_id, name, email, phone)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_created ON clients(agency_id, created_at)');
+    // Clients table - composite indexes for common queries
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_agency_status ON clients(agency_id, status, created_at DESC)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_search ON clients(agency_id, name)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_clients_soft_delete ON clients(deleted_at)');
 
-    // Policies table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_agency ON policies(agency_id, status)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_expiry ON policies(expiry_date, status)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_client ON policies(client_id)');
+    // Policies table indexes - optimized for expiry and status queries
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_agency_status ON policies(agency_id, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_client_status ON policies(client_id, status)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_policies_expiry ON policies(end_date, status)');
 
-    // Renewals table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_agency ON renewals(agency_id, status)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_due ON renewals(due_date, status)');
+    // Renewals table indexes - critical for renewal lists
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_agency_status ON renewals(agency_id, status, created_at DESC)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_due_date ON renewals(due_date, status)');
     await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_client ON renewals(client_id)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_renewals_policy ON renewals(policy_id)');
 
     // Users table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_users_agency ON users(agency_id)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_users_agency ON users(agency_id, is_active)');
     await runAsync('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
 
-    // Refresh tokens indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id, expires_at)');
+    // Refresh tokens indexes - for token cleanup queries
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expiry ON refresh_tokens(expires_at, is_revoked)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id, is_revoked)');
 
-    // Commissions table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_commissions_agency ON commissions(agency_id, date)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_commissions_client ON commissions(client_id)');
-
-    // Quotes table indexes
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_quotes_agency ON quotes(agency_id, created_at)');
-    await runAsync('CREATE INDEX IF NOT EXISTS idx_quotes_client ON quotes(client_id)');
+    // Audit logs indexes - for audit trail queries
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id, created_at DESC)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id, created_at DESC)');
+    await runAsync('CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action, created_at DESC)');
 
     console.log('✅ Database indexes created successfully');
   } catch (error) {

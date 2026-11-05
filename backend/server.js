@@ -21,12 +21,44 @@ const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  maxAge: 86400 // 24 hours
 };
 
 // Middleware
 app.use(cors(corsOptions));
+
+// Security: Add security headers
+app.use((req, res, next) => {
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Clickjacking protection
+  res.setHeader('X-Frame-Options', 'DENY');
+
+  // XSS protection (older browsers)
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  // Referrer policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Content Security Policy (permissive for now, tighten in production)
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+  );
+
+  // HSTS for HTTPS
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  next();
+});
+
+// Compression middleware
 app.use(compression({ threshold: 1024 })); // Gzip compression for responses > 1KB
+
+// Body parsers with size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -42,7 +74,7 @@ const loginLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV !== 'production' // Disable in development
 });
 
-// General API rate limiter: 100 requests per 15 minutes
+// POST/PUT/DELETE rate limiter: 100 requests per 15 minutes
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -50,6 +82,16 @@ const generalLimiter = rateLimit({
   standardHeaders: false,
   legacyHeaders: false,
   skip: (req) => process.env.NODE_ENV !== 'production' || req.method === 'GET'
+});
+
+// More aggressive limiter for sensitive endpoints
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10, // Very limited
+  message: 'Too many requests to this endpoint',
+  standardHeaders: false,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production'
 });
 
 // Apply general limiter to all API routes
@@ -67,13 +109,25 @@ const csrfProtection = csrf({
 // Security: Start automatic backups
 scheduleBackups(6); // Every 6 hours
 
-// Root route - serve index.html
+// Cache middleware for static assets
+const cacheStatic = (req, res, next) => {
+  if (req.path.startsWith('/assets/')) {
+    // Cache static assets for 1 month (they have hash in filename)
+    res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+  }
+  next();
+};
+app.use(cacheStatic);
+
+// Root route - serve index.html (no cache)
 app.get('/', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // Health check
 app.get('/health', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
   res.json({ status: 'ok', version: '1.0.1', timestamp: new Date().toISOString() });
 });
 
@@ -137,6 +191,10 @@ app.use('/api/dashboard', authenticate, dashboardRoutes);
 // Admin routes (audit logs, user management)
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', authenticate, adminRoutes);
+
+// Webhooks routes (event subscription and delivery)
+const webhookRoutes = require('./routes/webhooks');
+app.use('/api/webhooks', authenticate, webhookRoutes);
 
 // Serve static files from dist folder (frontend build)
 const distPath = path.resolve(__dirname, '..', 'dist');
