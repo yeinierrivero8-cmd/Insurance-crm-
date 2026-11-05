@@ -3,6 +3,7 @@ const cors = require('cors');
 const compression = require('compression');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const csrf = require('csurf');
@@ -198,6 +199,17 @@ app.use('/api/webhooks', authenticate, webhookRoutes);
 
 // Serve static files from dist folder (frontend build)
 const distPath = path.resolve(__dirname, '..', 'dist');
+// Diagnostic: Check if dist folder exists
+const distExists = fs.existsSync(distPath);
+console.log('📊 [DIAGNOSTICS] distPath:', distPath);
+console.log('📊 [DIAGNOSTICS] dist folder exists:', distExists);
+if (distExists) {
+  const files = fs.readdirSync(distPath);
+  console.log('📊 [DIAGNOSTICS] dist contents:', files);
+  const indexPath = path.join(distPath, 'index.html');
+  console.log('📊 [DIAGNOSTICS] index.html exists:', fs.existsSync(indexPath));
+}
+
 console.log('📁 Serving static files from:', distPath);
 app.use(express.static(distPath));
 
