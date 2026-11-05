@@ -19,24 +19,30 @@ export default {
       output: {
         // Main bundle
         entryFileNames: 'assets/[name]-[hash].js',
-        // Vendor chunks
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId
-            ? chunkInfo.facadeModuleId.split('/').pop().split('.')[0]
-            : 'chunk';
-          return `assets/[name]-[hash].js`;
-        },
+        // Chunk files with hash
+        chunkFileNames: 'assets/[name]-[hash].js',
         // Assets
         assetFileNames: 'assets/[name]-[hash][extname]',
-        // Manualchunks for better caching
-        manualChunks: {
-          // Vendor chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react'],
-          'form-vendor': ['@hookform/resolvers', 'zod'],
-          'data-vendor': ['papaparse', 'pdfkit', 'xlsx'],
-          // Utilities
-          'utils': ['crypto-js', 'qrcode', 'speakeasy']
+        // Manualchunks for better caching (as function)
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            if (id.includes('hookform') || id.includes('zod')) {
+              return 'form-vendor';
+            }
+            if (id.includes('papaparse') || id.includes('pdfkit') || id.includes('xlsx')) {
+              return 'data-vendor';
+            }
+            if (id.includes('crypto-js') || id.includes('qrcode') || id.includes('speakeasy')) {
+              return 'utils';
+            }
+            return 'vendor';
+          }
         }
       }
     },
