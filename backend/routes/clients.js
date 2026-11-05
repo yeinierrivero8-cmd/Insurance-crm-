@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     if (!agencyId) return res.status(400).json({ error: 'agencyId required' });
 
     const result = await pool.query(
-      'SELECT * FROM clients WHERE agency_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
+      'SELECT * FROM clients WHERE agency_id = $1 ORDER BY created_at DESC',
       [agencyId]
     );
 
@@ -24,7 +24,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      'SELECT * FROM clients WHERE id = $1',
       [id]
     );
 
