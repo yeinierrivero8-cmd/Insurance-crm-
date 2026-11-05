@@ -222,16 +222,29 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Start server after database is ready
+// Start server with timeout for database initialization
+const dbInitTimeout = setTimeout(() => {
+  console.warn('⚠️ Database initialization timeout (10s), starting server anyway...');
+  startServer();
+}, 10000);
+
 initDatabase()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on http://localhost:${PORT}`);
-    });
+    clearTimeout(dbInitTimeout);
+    console.log('✅ Database initialized successfully');
+    startServer();
   })
   .catch(err => {
-    console.error('❌ Failed to start server:', err.message);
-    process.exit(1);
+    clearTimeout(dbInitTimeout);
+    console.error('❌ Database initialization error:', err.message);
+    console.warn('⚠️ Starting server without full database (may cause errors)');
+    startServer();
   });
+
+function startServer() {
+  app.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+  });
+}
 
 module.exports = { app, pool };
