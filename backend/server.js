@@ -10,10 +10,13 @@ const { initDatabase } = require('./db/init-sqlite');
 
 dotenv.config();
 
-// Initialize SQLite database
-initDatabase();
-
 const app = express();
+
+// Initialize SQLite database before starting server
+initDatabase().catch(err => {
+  console.error('Failed to initialize database:', err.message);
+  process.exit(1);
+});
 
 // Middleware
 app.use(cors());
@@ -93,8 +96,17 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+
+// Start server after database is ready
+initDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Failed to start server:', err.message);
+    process.exit(1);
+  });
 
 module.exports = { app, pool };
