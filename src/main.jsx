@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useApi } from './hooks/useApi';
 import { Home, Users, ShieldCheck, CalendarDays, Coins, Phone, MessageCircle, Mail, Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader, AlertCircle, ClipboardList, Bell, Globe, LogOut, Clock3, Target, MoreHorizontal, BriefcaseBusiness, ChartNoAxesCombined } from 'lucide-react';
+import ImportExportPanel from './components/ImportExportPanel';
 import './styles/index.css';
 console.log('main.jsx loaded');
 
@@ -627,6 +628,7 @@ function AppOld() {
                   </div>
                 ) : (
                   <>
+                    {(user?.role === 'admin' || user?.role === 'agent') && <ImportExportPanel agencyId={user?.agency_id || 1} onImportSuccess={refetchClients} />}
                     <div className="searchbox"><Search size={19} /><input placeholder={t.search} value={search} onChange={e => setSearch(e.target.value)} /><SlidersHorizontal size={19} /></div>
                     <div className="filters">{[t.all, t.active, t.renew].map((v, i) => <button key={v} className={filter == ['Todos', 'Activos', 'Renovaciones'][i] ? 'on' : ''} onClick={() => setFilter(['Todos', 'Activos', 'Renovaciones'][i])}>{v} {i === 0 ? `(${clients?.length || 0})` : i === 1 ? `(${clients?.filter(c => c.status === 'Activo').length || 0})` : `(${clients?.filter(c => c.status === 'Renovación').length || 0})`}</button>)}</div>
                     <div className="client-list">{clients.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()) && (filter === 'Todos' || (filter === 'Activos' ? c.status === 'Activo' : c.status === 'Renovación'))).map(c => <button className="client-row" key={c.id} onClick={() => selectClient(c)}><span className={'initials ' + (c.color || 'blue')}>{c.initials || c.name?.split(' ').map(x => x[0]).slice(0, 2).join('').toUpperCase()}</span><span className="client-name"><b>{c.name}</b><small>{c.type}</small></span><span className="client-meta"><span className={'badge ' + (c.status === 'Activo' ? 'success' : 'warning')}>{c.status}</span><small>Vence: {c.date || 'Por definir'}</small></span></button>)}{clients.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()) && (filter === 'Todos' || (filter === 'Activos' ? c.status === 'Activo' : c.status === 'Renovación'))).length === 0 && <p className="empty">No se encontraron clientes.</p>}</div>

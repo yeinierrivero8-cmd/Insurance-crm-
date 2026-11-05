@@ -122,6 +122,14 @@ app.use('/api/policies', authenticate, policyRoutes);
 const renewalRoutes = require('./routes/renewals');
 app.use('/api/renewals', authenticate, renewalRoutes);
 
+// Import routes
+const importRoutes = require('./routes/import');
+app.use('/api/import', authenticate, importRoutes);
+
+// Export routes
+const exportRoutes = require('./routes/export');
+app.use('/api/export', authenticate, exportRoutes);
+
 // Serve static files from dist folder (frontend build)
 const distPath = path.resolve(__dirname, '..', 'dist');
 console.log('📁 Serving static files from:', distPath);
