@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { pool } = require('../server');
+const { pool } = require('../db/sqlite-pool');
 
 // Helper: Generate refresh token with SHA256 hash
 const generateRefreshToken = () => {
