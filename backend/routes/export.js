@@ -4,6 +4,8 @@ const xlsx = require('xlsx');
 const PDFDocument = require('pdfkit');
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
+const authenticate = require('../middleware/authMiddleware');
+const allowedRoles = require('../middleware/roleBasedAccess');
 
 // Helper to get all clients for a given agency
 const getClientsForAgency = (agencyId) => {
@@ -22,15 +24,11 @@ const getClientsForAgency = (agencyId) => {
   });
 };
 
-// GET /api/export/clients/excel?agencyId=1
-router.get('/clients/excel', async (req, res) => {
+// GET /api/export/clients/excel - Solo ver datos de su agencia
+router.get('/clients/excel', authenticate, allowedRoles(['admin', 'agent']), async (req, res) => {
   try {
-    const { agencyId } = req.query;
-
-    // Validate agencyId
-    if (!agencyId || isNaN(agencyId)) {
-      return res.status(400).json({ error: 'Agency ID requerido y debe ser un número' });
-    }
+    // Usar agencyId del usuario autenticado
+    const agencyId = req.user.agencyId;
 
     // Fetch clients
     const clients = await getClientsForAgency(agencyId);
@@ -98,15 +96,11 @@ router.get('/clients/excel', async (req, res) => {
   }
 });
 
-// GET /api/export/clients/pdf?agencyId=1
-router.get('/clients/pdf', async (req, res) => {
+// GET /api/export/clients/pdf - Solo ver datos de su agencia
+router.get('/clients/pdf', authenticate, allowedRoles(['admin', 'agent']), async (req, res) => {
   try {
-    const { agencyId } = req.query;
-
-    // Validate agencyId
-    if (!agencyId || isNaN(agencyId)) {
-      return res.status(400).json({ error: 'Agency ID requerido y debe ser un número' });
-    }
+    // Usar agencyId del usuario autenticado
+    const agencyId = req.user.agencyId;
 
     // Fetch clients
     const clients = await getClientsForAgency(agencyId);

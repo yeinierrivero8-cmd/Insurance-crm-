@@ -6,6 +6,8 @@ const fs = require('fs');
 const { pool } = require('../db/sqlite-pool');
 const { parseExcel, parseCSV, validateClientRow } = require('../middleware/fileParser');
 const auditLog = require('../middleware/auditLogger');
+const authenticate = require('../middleware/authMiddleware');
+const allowedRoles = require('../middleware/roleBasedAccess');
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -29,16 +31,11 @@ const upload = multer({
   }
 });
 
-// POST /api/import/clients
-router.post('/clients', upload.single('file'), async (req, res) => {
+// POST /api/import/clients - Solo admin puede importar
+router.post('/clients', authenticate, allowedRoles(['admin']), upload.single('file'), async (req, res) => {
   try {
-    const { agencyId } = req.body;
-
-    // Validate agencyId
-    if (!agencyId || isNaN(agencyId)) {
-      if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: 'Agency ID requerido y debe ser un número' });
-    }
+    // Usar agencyId del usuario autenticado
+    const agencyId = req.user.agencyId;
 
     // Check if file exists
     if (!req.file) {

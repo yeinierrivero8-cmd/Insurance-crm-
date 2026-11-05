@@ -3,40 +3,44 @@ const router = express.Router();
 const { pool } = require('../db/sqlite-pool');
 const auditLog = require('../middleware/auditLogger');
 const { validateClientInput } = require('../middleware/inputValidator');
+const authenticate = require('../middleware/authMiddleware');
+const allowedRoles = require('../middleware/roleBasedAccess');
 
-// GET /api/clients
-router.get('/', async (req, res) => {
+// GET /api/clients - Solo ver clientes de su agencia
+router.get('/', authenticate, allowedRoles(['admin', 'agent', 'viewer']), async (req, res) => {
   try {
-    const { agencyId } = req.query;
-    if (!agencyId) return res.status(400).json({ error: 'agencyId is required' });
+    // Validación crítica: usuario solo puede ver su propia agencia
+    if (req.user.agencyId) {
+      const result = await pool.query(
+        `SELECT * FROM clients
+         WHERE agency_id = $1 AND deleted_at IS NULL
+         ORDER BY created_at DESC`,
+        [req.user.agencyId]
+      );
 
-    // Validate agencyId is a number
-    if (isNaN(agencyId)) {
-      return res.status(400).json({ error: 'agencyId must be a valid number' });
+      res.json(result.rows);
+    } else {
+      res.status(403).json({ error: 'No tienes acceso a clientes' });
     }
-
-    const result = await pool.query(
-      'SELECT * FROM clients WHERE agency_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
-      [agencyId]
-    );
-
-    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/clients/:id
-router.get('/:id', async (req, res) => {
+// GET /api/clients/:id - Solo ver clientes de su agencia
+router.get('/:id', authenticate, allowedRoles(['admin', 'agent', 'viewer']), async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Verificar que el cliente pertenece a su agencia
     const result = await pool.query(
-      'SELECT * FROM clients WHERE id = $1',
-      [id]
+      'SELECT * FROM clients WHERE id = $1 AND agency_id = $2',
+      [id, req.user.agencyId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Client not found' });
+      auditLog(req, 'CLIENT_ACCESS_DENIED', { clientId: id, userAgencyId: req.user.agencyId });
+      return res.status(404).json({ error: 'Client not found or access denied' });
     }
 
     res.json(result.rows[0]);
@@ -45,28 +49,19 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/clients
-router.post('/', validateClientInput, async (req, res) => {
+// POST /api/clients - Solo admin puede crear clientes
+router.post('/', authenticate, allowedRoles(['admin']), validateClientInput, async (req, res) => {
   try {
-    const { name, email, phone, type, status, agencyId, notes } = req.body;
-
-    if (!agencyId) {
-      return res.status(400).json({ error: 'agencyId is required' });
-    }
-
-    // Validate agencyId is a number
-    if (isNaN(agencyId)) {
-      return res.status(400).json({ error: 'agencyId must be a valid number' });
-    }
+    const { name, email, phone, type, status, notes } = req.body;
 
     const result = await pool.query(
       `INSERT INTO clients (name, email, phone, type, status, agency_id, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, email, phone, type || 'personal', status || 'active', agencyId, notes]
+      [name, email, phone, type || 'personal', status || 'active', req.user.agencyId, notes]
     );
 
     // Log the action
-    auditLog(req, 'CLIENT_CREATED', { clientId: result.rows[0].id, name, email });
+    auditLog(req, 'CLIENT_CREATED', { clientId: result.rows[0].id, name, email, agencyId: req.user.agencyId });
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -75,8 +70,8 @@ router.post('/', validateClientInput, async (req, res) => {
   }
 });
 
-// PUT /api/clients/:id
-router.put('/:id', validateClientInput, async (req, res) => {
+// PUT /api/clients/:id - Solo admin puede actualizar
+router.put('/:id', authenticate, allowedRoles(['admin']), validateClientInput, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, type, status, notes } = req.body;
@@ -84,6 +79,17 @@ router.put('/:id', validateClientInput, async (req, res) => {
     // Validate id is a number
     if (isNaN(id)) {
       return res.status(400).json({ error: 'Invalid client ID' });
+    }
+
+    // Verificar que el cliente pertenece a su agencia
+    const clientCheck = await pool.query(
+      'SELECT * FROM clients WHERE id = $1 AND agency_id = $2',
+      [id, req.user.agencyId]
+    );
+
+    if (clientCheck.rows.length === 0) {
+      auditLog(req, 'CLIENT_UPDATE_DENIED', { clientId: id, userAgencyId: req.user.agencyId });
+      return res.status(404).json({ error: 'Client not found or access denied' });
     }
 
     const result = await pool.query(
@@ -95,9 +101,9 @@ router.put('/:id', validateClientInput, async (req, res) => {
            status = COALESCE($5, status),
            notes = COALESCE($6, notes),
            updated_at = DATETIME('now')
-       WHERE id = $7
+       WHERE id = $7 AND agency_id = $8
        RETURNING *`,
-      [name, email, phone, type, status, notes, id]
+      [name, email, phone, type, status, notes, id, req.user.agencyId]
     );
 
     if (result.rows.length === 0) {
@@ -105,7 +111,7 @@ router.put('/:id', validateClientInput, async (req, res) => {
     }
 
     // Log the action
-    auditLog(req, 'CLIENT_UPDATED', { clientId: id, changes: { name, email, phone, type, status } });
+    auditLog(req, 'CLIENT_UPDATED', { clientId: id, agencyId: req.user.agencyId, changes: { name, email, phone, type, status } });
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -114,8 +120,8 @@ router.put('/:id', validateClientInput, async (req, res) => {
   }
 });
 
-// DELETE /api/clients/:id (soft delete)
-router.delete('/:id', async (req, res) => {
+// DELETE /api/clients/:id (soft delete) - Solo admin
+router.delete('/:id', authenticate, allowedRoles(['admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -124,9 +130,20 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid client ID' });
     }
 
+    // Verificar que el cliente pertenece a su agencia
+    const clientCheck = await pool.query(
+      'SELECT * FROM clients WHERE id = $1 AND agency_id = $2',
+      [id, req.user.agencyId]
+    );
+
+    if (clientCheck.rows.length === 0) {
+      auditLog(req, 'CLIENT_DELETE_DENIED', { clientId: id, userAgencyId: req.user.agencyId });
+      return res.status(404).json({ error: 'Client not found or access denied' });
+    }
+
     const result = await pool.query(
-      `UPDATE clients SET deleted_at = DATETIME('now') WHERE id = $1 RETURNING *`,
-      [id]
+      `UPDATE clients SET deleted_at = DATETIME('now') WHERE id = $1 AND agency_id = $2 RETURNING *`,
+      [id, req.user.agencyId]
     );
 
     if (result.rows.length === 0) {
@@ -134,7 +151,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Log the action
-    auditLog(req, 'CLIENT_DELETED', { clientId: id, clientName: result.rows[0].name });
+    auditLog(req, 'CLIENT_DELETED', { clientId: id, agencyId: req.user.agencyId, clientName: result.rows[0].name });
 
     res.json({ message: 'Client deleted successfully' });
   } catch (error) {
