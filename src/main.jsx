@@ -802,4 +802,4 @@ function Metric({ icon: Icon, label, value, growth, tone, onClick }) {
   return <button onClick={onClick} className={'metric ' + tone}><Icon size={26} /><span>{label}</span><div><strong>{value}</strong>{growth && <small>↑ {growth}</small>}</div></button>;
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById('root')).render(<AppOld />);
