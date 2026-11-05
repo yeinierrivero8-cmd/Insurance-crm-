@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useApi } from './hooks/useApi';
-import { Home, Users, ShieldCheck, CalendarDays, Coins, Phone, MessageCircle, Mail, Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader, AlertCircle, ClipboardList, Bell, Globe, LogOut, Clock3, Target, MoreHorizontal } from 'lucide-react';
+import { Home, Users, ShieldCheck, CalendarDays, Coins, Phone, MessageCircle, Mail, Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader, AlertCircle, ClipboardList, Bell, Globe, LogOut, Clock3, Target, MoreHorizontal, BriefcaseBusiness, ChartNoAxesCombined } from 'lucide-react';
 console.log('main.jsx loaded');
 // import './style.css';
 
