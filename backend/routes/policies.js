@@ -6,14 +6,84 @@ const { authenticate } = require('../middleware/authMiddleware');
 const allowedRoles = require('../middleware/roleBasedAccess');
 
 // GET /api/policies - Solo ver políticas de su agencia
+// Query params: client_id=, type=, status=, expiry_days_left=, limit=50, offset=0, sort=
 router.get('/', authenticate, allowedRoles(['admin', 'agent', 'viewer']), async (req, res) => {
   try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 500);
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+    const clientId = (req.query.client_id || '').trim();
+    const type = (req.query.type || '').trim();
+    const status = (req.query.status || '').trim();
+    const expiryDaysLeft = parseInt(req.query.expiry_days_left) || null;
+    const sort = (req.query.sort || 'created_at:desc').trim();
+
+    // Parse sort parameter
+    const [sortField, sortDir] = sort.split(':');
+    const validSortFields = ['policy_number', 'type', 'status', 'expiry_date', 'premium', 'created_at'];
+    const sortColumn = validSortFields.includes(sortField) ? sortField : 'created_at';
+    const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
+
+    // Build WHERE clause
+    let whereConditions = ['p.agency_id = $1'];
+    let params = [req.user.agencyId];
+
+    if (clientId) {
+      whereConditions.push(`p.client_id = $${params.length + 1}`);
+      params.push(parseInt(clientId));
+    }
+
+    if (type) {
+      whereConditions.push(`p.type = $${params.length + 1}`);
+      params.push(type);
+    }
+
+    if (status) {
+      whereConditions.push(`p.status = $${params.length + 1}`);
+      params.push(status);
+    }
+
+    if (expiryDaysLeft !== null) {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + expiryDaysLeft);
+      const today = new Date().toISOString().split('T')[0];
+      const expiryDate = futureDate.toISOString().split('T')[0];
+      whereConditions.push(`p.expiry_date >= $${params.length + 1} AND p.expiry_date <= $${params.length + 2}`);
+      params.push(today, expiryDate);
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+
+    // Get total count
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as count FROM policies p WHERE ${whereClause}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count);
+
+    // Get paginated results
+    const pageParams = [...params, limit, offset];
     const result = await pool.query(
-      'SELECT * FROM policies WHERE agency_id = $1 ORDER BY created_at DESC',
-      [req.user.agencyId]
+      `SELECT
+         p.*,
+         c.name as client_name,
+         c.email as client_email
+       FROM policies p
+       LEFT JOIN clients c ON p.client_id = c.id
+       WHERE ${whereClause}
+       ORDER BY p.${sortColumn} ${sortDirection}
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      pageParams
     );
 
-    res.json(result.rows);
+    res.json({
+      data: result.rows,
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total,
+      pageCount: Math.ceil(total / limit),
+      currentPage: Math.floor(offset / limit) + 1
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
