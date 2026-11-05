@@ -71,10 +71,11 @@ app.use(express.static(distPath));
 
 // SPA fallback: redirect all non-API non-static requests to index.html
 app.get('*', (req, res) => {
-  // Only serve index.html if file wasn't found by static middleware
-  res.status(404);
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
-    if (err) res.status(500).json({ error: 'File not found' });
+    if (err) {
+      console.error('Error sending index.html:', err);
+      res.status(500).json({ error: 'File not found', message: err.message });
+    }
   });
 });
 
