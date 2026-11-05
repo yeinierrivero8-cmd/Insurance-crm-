@@ -3,19 +3,17 @@ const cors = require('cors');
 const compression = require('compression');
 const dotenv = require('dotenv');
 const path = require('path');
-const { Pool } = require('pg');
 const cookieParser = require('cookie-parser');
 const { authenticate } = require('./middleware/authMiddleware');
+const { pool } = require('./db/sqlite-pool');
+const { initDatabase } = require('./db/init-sqlite');
 
 dotenv.config();
 
+// Initialize SQLite database
+initDatabase();
+
 const app = express();
-let pool = null;
-if (process.env.DATABASE_URL) {
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  });
-}
 
 // Middleware
 app.use(cors());
