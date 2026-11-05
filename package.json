@@ -25,6 +25,7 @@
     "test:ci": "npm run build && npm run test"
   },
   "dependencies": {
+    "@hookform/resolvers": "^7.0.3",
     "@vitejs/plugin-react": "^6.2.1",
     "bcrypt": "^5.1.1",
     "compression": "^1.7.4",
@@ -44,8 +45,10 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.18.5",
     "speakeasy": "^2.0.0",
     "sqlite3": "^6.0.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^4.6.7"
   }
 }
