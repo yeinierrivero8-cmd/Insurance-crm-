@@ -197,6 +197,12 @@ app.use('/api/admin', authenticate, adminRoutes);
 const webhookRoutes = require('./routes/webhooks');
 app.use('/api/webhooks', authenticate, webhookRoutes);
 
+
+// Debugging middleware to log requests
+app.use((req, res, next) => {
+  console.log('[REQUEST]', req.method, req.path);
+  next();
+});
 // Serve static files from dist folder (frontend build)
 const distPath = path.resolve(__dirname, '..', 'dist');
 // Diagnostic: Check if dist folder exists
