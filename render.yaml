@@ -3,7 +3,7 @@ services:
     name: insurance-crm
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build && echo "Build complete, dist exists: $(test -d dist && echo 'YES' || echo 'NO')"
+    buildCommand: echo "Using pre-built dist folder"
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
