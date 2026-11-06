@@ -4,9 +4,10 @@ import { useApi } from './hooks/useApi';
 import { Home, Users, ShieldCheck, CalendarDays, Coins, Phone, MessageCircle, Mail, Plus, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X, Loader, AlertCircle, ClipboardList, Bell, Globe, LogOut, Clock3, Target, MoreHorizontal, BriefcaseBusiness, ChartNoAxesCombined } from 'lucide-react';
 import ImportExportPanel from './components/ImportExportPanel';
 import './styles/index.css';
+import './styles/premium-login.css';
 console.log('main.jsx loaded');
 
-const API = typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:5000/api';
+const API = 'http://localhost:5000/api';
 
 const seed = [
   { id: 1, name: 'Juan Pérez', initials: 'JP', type: 'Salud (ACA)', date: '15 Dic 2026', status: 'Activo', color: 'blue', phone: '(786) 555-0147', email: 'juan@example.com' },
@@ -390,64 +391,101 @@ function AppOld() {
           <div className="status"><span>9:41</span><span>●●● ▰</span></div>
           <div className="login-page">
             <div className="login-container">
-              <div className="login-header">
-                <div className="big-shield"><ShieldCheck size={64} strokeWidth={1.7} /></div>
-                <h1>Insurance <span>CRM</span></h1>
+              <div className="login-left">
+                <div className="login-header">
+                  <div className="big-shield"><ShieldCheck size={28} strokeWidth={1.7} /></div>
+                  <h1>Insurance CRM</h1>
+                  <p>Agentes de Seguros</p>
+                </div>
+
+                <div className="login-features">
+                  <div className="feature-card"><span className="feature-card-icon">👥</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📋</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📅</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📈</span></div>
+                </div>
               </div>
 
-              <form onSubmit={handleLogin} className="login-form">
-                {loginError && (
-                  <div className="login-error">
-                    <AlertCircle size={18} />
-                    {loginError}
+              <div className="login-form-panel">
+                <div className="login-header">
+                  <div className="big-shield"><ShieldCheck size={24} strokeWidth={1.7} /></div>
+                  <h1>Insurance CRM</h1>
+                  <p>Agentes de Seguros</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="login-form">
+                  {loginError && (
+                    <div className="login-error">
+                      <AlertCircle size={18} />
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Usuario</label>
+                    <input
+                      type="email"
+                      required
+                      value={loginForm.email}
+                      onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
+                      placeholder="admin@insuraflow.com"
+                      disabled={loginLoading}
+                    />
                   </div>
-                )}
 
-                <label>
-                  {t.email_label}
-                  <input
-                    type="email"
-                    required
-                    value={loginForm.email}
-                    onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
-                    placeholder="admin@insuraflow.com"
+                  <div className="form-group">
+                    <label>Contraseña</label>
+                    <div className="input-with-icon">
+                      <input
+                        type="password"
+                        required
+                        id="password-input-unauth"
+                        value={loginForm.password}
+                        onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                        placeholder="••••••••"
+                        disabled={loginLoading}
+                      />
+                      <button type="button" className="toggle-password" onClick={() => {
+                        const el = document.getElementById('password-input-unauth');
+                        el.type = el.type === 'password' ? 'text' : 'password';
+                      }} disabled={loginLoading}>
+                        👁️
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-helpers">
+                    <div className="checkbox-wrapper">
+                      <input type="checkbox" id="remember-me-unauth" />
+                      <label htmlFor="remember-me-unauth">Recuérdame</label>
+                    </div>
+                    <button type="button" className="forgot-password" onClick={() => alert('Recuperación de contraseña próximamente')}>¿Olvidaste tu contraseña?</button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
                     disabled={loginLoading}
-                  />
-                </label>
+                  >
+                    {loginLoading ? '⏳ ' + t.loading : '→ ' + t.signin_button}
+                  </button>
 
-                <label>
-                  {t.password}
-                  <input
-                    type="password"
-                    required
-                    value={loginForm.password}
-                    onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
-                    placeholder="Admin@123"
-                    disabled={loginLoading}
-                  />
-                </label>
+                  <div className="form-divider">o</div>
 
-                <button
-                  type="submit"
-                  className="primary wide"
-                  disabled={loginLoading}
-                >
-                  {loginLoading ? t.loading : t.signin_button}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('welcome')}
+                    className="btn-secondary"
+                  >
+                    👤 {t.register}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => navigate('welcome')}
-                  className="outline wide"
-                >
-                  {t.register}
-                </button>
-              </form>
-
-              <div className="language">
-                <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
-                <i />
-                <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+                  <div className="language">
+                    <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
+                    <i />
+                    <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
@@ -462,91 +500,139 @@ function AppOld() {
         <div className="status"><span>9:41</span><span>●●● ▰</span></div>
 
         {page === 'welcome' ? (
-          <main className="content white-content">
-            <div className="welcome">
-              <div className="welcome-glow" />
-              <div className="brand-center">
-                <div className="big-shield"><ShieldCheck size={74} strokeWidth={1.7} /></div>
-                <h1>Insurance <span>CRM</span></h1>
-                <p>{t.tagline}</p>
-              </div>
-              <div className="welcome-lower">
-                <div className="features">
-                  {[[Users, t.feature1], [CalendarDays, t.feature2], [BriefcaseBusiness, t.feature3], [ChartNoAxesCombined, t.feature4]].map(([Icon, label]) =>
-                    <div key={label}><Icon size={22} /><span>{label}</span></div>
-                  )}
+          <div className="login-page">
+            <div className="login-container">
+              <div className="login-left">
+                <div className="login-header">
+                  <div className="big-shield"><ShieldCheck size={28} strokeWidth={1.7} /></div>
+                  <h1>Insurance CRM</h1>
+                  <p>Agentes de Seguros</p>
                 </div>
-                <button className="primary wide" onClick={() => navigate('login')}>{t.login}</button>
-                <button className="outline wide" onClick={() => navigate('login')}>{t.register}</button>
-                <div className="language">
+
+                <div className="login-features">
+                  <div className="feature-card"><span className="feature-card-icon">👥</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📋</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📅</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📈</span></div>
+                </div>
+              </div>
+
+              <div className="login-form-panel" style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                <h1 style={{fontSize: 'clamp(32px, 6vw, 48px)', fontWeight: 800, lineHeight: 1.2, marginBottom: '16px', letterSpacing: '-1px', color: '#10234B', margin: '0 0 32px 0', textAlign: 'center'}}>
+                  Gestiona tus clientes.<br/>Crece tu <span style={{background: 'linear-gradient(135deg, #1769E8 0%, #1769E8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>comisión</span>.
+                </h1>
+
+                <div style={{display: 'flex', flexDirection: 'column', gap: '12px', width: '100%'}}>
+                  <button onClick={() => navigate('login')} className="btn-primary">✓ {t.login}</button>
+                  <button onClick={() => navigate('login')} className="btn-secondary">{t.register}</button>
+                </div>
+
+                <div className="language" style={{marginTop: '32px'}}>
                   <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
                   <i />
                   <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         ) : page === 'login' ? (
           <div className="login-page">
             <div className="login-container">
-              <div className="login-header">
-                <div className="big-shield"><ShieldCheck size={64} strokeWidth={1.7} /></div>
-                <h1>Insurance <span>CRM</span></h1>
+              <div className="login-left">
+                <div className="login-header">
+                  <div className="big-shield"><ShieldCheck size={28} strokeWidth={1.7} /></div>
+                  <h1>Insurance CRM</h1>
+                  <p>Agentes de Seguros</p>
+                </div>
+
+                <div className="login-features">
+                  <div className="feature-card"><span className="feature-card-icon">👥</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📋</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📅</span></div>
+                  <div className="feature-card"><span className="feature-card-icon">📈</span></div>
+                </div>
               </div>
 
-              <form onSubmit={handleLogin} className="login-form">
-                {loginError && (
-                  <div className="login-error">
-                    <AlertCircle size={18} />
-                    {loginError}
+              <div className="login-form-panel">
+                <div className="login-header">
+                  <div className="big-shield"><ShieldCheck size={24} strokeWidth={1.7} /></div>
+                  <h1>Insurance CRM</h1>
+                  <p>Agentes de Seguros</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="login-form">
+                  {loginError && (
+                    <div className="login-error">
+                      <AlertCircle size={18} />
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Usuario</label>
+                    <input
+                      type="email"
+                      required
+                      value={loginForm.email}
+                      onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
+                      placeholder="admin@insuraflow.com"
+                      disabled={loginLoading}
+                    />
                   </div>
-                )}
 
-                <label>
-                  {t.email_label}
-                  <input
-                    type="email"
-                    required
-                    value={loginForm.email}
-                    onChange={e => setLoginForm({ ...loginForm, email: e.target.value })}
-                    placeholder="admin@insuraflow.com"
+                  <div className="form-group">
+                    <label>Contraseña</label>
+                    <div className="input-with-icon">
+                      <input
+                        type="password"
+                        required
+                        id="password-input"
+                        value={loginForm.password}
+                        onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                        placeholder="••••••••"
+                        disabled={loginLoading}
+                      />
+                      <button type="button" className="toggle-password" onClick={() => {
+                        const el = document.getElementById('password-input');
+                        el.type = el.type === 'password' ? 'text' : 'password';
+                      }} disabled={loginLoading}>
+                        👁️
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-helpers">
+                    <div className="checkbox-wrapper">
+                      <input type="checkbox" id="remember-me" />
+                      <label htmlFor="remember-me">Recuérdame</label>
+                    </div>
+                    <button type="button" className="forgot-password" onClick={() => alert('Recuperación de contraseña próximamente')}>¿Olvidaste tu contraseña?</button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
                     disabled={loginLoading}
-                  />
-                </label>
+                  >
+                    {loginLoading ? '⏳ ' + t.loading : '→ ' + t.signin_button}
+                  </button>
 
-                <label>
-                  {t.password}
-                  <input
-                    type="password"
-                    required
-                    value={loginForm.password}
-                    onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
-                    placeholder="Admin@123"
-                    disabled={loginLoading}
-                  />
-                </label>
+                  <div className="form-divider">o</div>
 
-                <button
-                  type="submit"
-                  className="primary wide"
-                  disabled={loginLoading}
-                >
-                  {loginLoading ? t.loading : t.signin_button}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('welcome')}
+                    className="btn-secondary"
+                  >
+                    👤 {t.register}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => navigate('welcome')}
-                  className="outline wide"
-                >
-                  {t.register}
-                </button>
-              </form>
-
-              <div className="language">
-                <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
-                <i />
-                <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+                  <div className="language">
+                    <button onClick={() => setLang('es')} className={lang === 'es' ? 'chosen' : ''}>🇪🇸 Español</button>
+                    <i />
+                    <button onClick={() => setLang('en')} className={lang === 'en' ? 'chosen' : ''}>🇺🇸 English</button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
