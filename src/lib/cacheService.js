@@ -36,14 +36,23 @@ class CacheService {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
       request.onerror = () => console.warn('[CACHE] IndexedDB open failed');
       request.onupgradeneeded = (event) => {
-        const db = event.target.result;
+        const db = event?.target?.result;
+        if (!db) {
+          console.warn('[CACHE] Event target result is undefined in onupgradeneeded');
+          return;
+        }
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'key' });
           store.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
       request.onsuccess = () => {
-        this.db = request.target.result;
+        const db = request?.target?.result;
+        if (!db) {
+          console.warn('[CACHE] Request target result is undefined in onsuccess');
+          return;
+        }
+        this.db = db;
         console.log('[CACHE] IndexedDB initialized');
       };
     } catch (e) {
