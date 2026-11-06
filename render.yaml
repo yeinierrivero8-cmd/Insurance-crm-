@@ -3,7 +3,7 @@ services:
     name: insurance-crm
     runtime: node
     plan: free
-    buildCommand: npm install --legacy-peer-deps
+    buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
