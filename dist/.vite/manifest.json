@@ -1,0 +1,26 @@
+{
+  "_react-vendor-CtCzknYe.js": {
+    "file": "assets/react-vendor-CtCzknYe.js",
+    "name": "react-vendor",
+    "imports": [
+      "_rolldown-runtime-la_ZsWYt.js"
+    ]
+  },
+  "_rolldown-runtime-la_ZsWYt.js": {
+    "file": "assets/rolldown-runtime-la_ZsWYt.js",
+    "name": "rolldown-runtime"
+  },
+  "index.html": {
+    "file": "assets/index-lwTLX9xE.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-la_ZsWYt.js",
+      "_react-vendor-CtCzknYe.js"
+    ],
+    "css": [
+      "assets/index-CGnjDw7o.css"
+    ]
+  }
+}
