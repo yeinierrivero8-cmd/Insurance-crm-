@@ -208,30 +208,26 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from dist
+// Check if dist exists
 const distExists = fs.existsSync(distPath);
-console.log('📁 Dist path:', distPath);
-console.log('📁 Dist exists:', distExists);
+console.log('📁 Serving static files from:', distPath);
+console.log('📁 Dist folder exists:', distExists);
 
 if (distExists) {
-  app.use(express.static(distPath));
-  console.log('✅ Serving static files from dist');
-} else {
-  console.warn('⚠️  dist folder not found at', distPath);
+  const files = fs.readdirSync(distPath);
+  console.log('📁 Files in dist:', files.slice(0, 5).join(', '));
 }
 
-// SPA fallback for all non-API routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(distPath, 'index.html');
-  console.log('📍 Fallback: trying to serve', indexPath);
+app.use(express.static(distPath));
 
-  if (fs.existsSync(indexPath)) {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(fs.readFileSync(indexPath, 'utf8'));
-  } else {
-    console.error('❌ index.html not found at', indexPath);
-    res.status(404).json({ error: 'index.html not found' });
-  }
+// SPA fallback: redirect all non-API non-static requests to index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'), (err) => {
+    if (err) {
+      console.error('Error sending index.html:', err);
+      res.status(500).json({ error: 'File not found', message: err.message });
+    }
+  });
 });
 
 // Error handler
