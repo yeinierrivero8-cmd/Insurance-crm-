@@ -111,7 +111,8 @@ const csrfProtection = csrf({
 });
 
 // Security: Start automatic backups
-scheduleBackups(6); // Every 6 hours
+
+// Serve static files from dist folder (frontend build)
 
 // Cache middleware for static assets
 const cacheStatic = (req, res, next) => {
@@ -206,18 +207,6 @@ app.use((req, res, next) => {
   console.log('[REQUEST]', req.method, req.path);
   next();
 });
-
-// Serve static files from dist folder (frontend build)
-// Diagnostic: Check if dist folder exists
-const distExists = fs.existsSync(distPath);
-console.log('📊 [DIAGNOSTICS] distPath:', distPath);
-console.log('📊 [DIAGNOSTICS] dist folder exists:', distExists);
-if (distExists) {
-  const files = fs.readdirSync(distPath);
-  console.log('📊 [DIAGNOSTICS] dist contents:', files);
-  const indexPath = path.join(distPath, 'index.html');
-  console.log('📊 [DIAGNOSTICS] index.html exists:', fs.existsSync(indexPath));
-}
 
 console.log('📁 Serving static files from:', distPath);
 app.use(express.static(distPath));
