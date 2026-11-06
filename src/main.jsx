@@ -651,7 +651,30 @@ function AppOld() {
               </div>
             </header>
 
-            {notifications && <div className="notification-pop"><b>Notificaciones</b><p>🔔 Tienes 3 renovaciones para revisar esta semana.</p><button onClick={() => navigate('renewals')}>Ver renovaciones →</button></div>}
+            {notifications && (
+              <div style={{
+                position: 'absolute',
+                top: 70,
+                right: 20,
+                background: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                minWidth: '320px',
+                zIndex: 1000
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <b style={{ fontSize: '16px', color: '#1a1a1a' }}>Notificaciones</b>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '16px' }} title="Configurar" onClick={() => navigate('more')}>⚙️</button>
+                    <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '16px', color: '#999' }} title="Cerrar" onClick={() => setNotifications(false)}>✕</button>
+                  </div>
+                </div>
+                <p style={{ margin: '8px 0', fontSize: '14px', color: '#333', lineHeight: '1.6' }}>🔔 Tienes 3 renovaciones para revisar esta semana.</p>
+                <button onClick={() => { navigate('renewals'); setNotifications(false); }} style={{ marginTop: '12px', width: '100%', padding: '8px 12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>Ver renovaciones →</button>
+              </div>
+            )}
 
             {page === 'home' ? (
               <main className="content dashboard">
