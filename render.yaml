@@ -3,7 +3,7 @@ services:
     name: insurance-crm
     runtime: node
     plan: free
-    buildCommand: echo "Using pre-built dist folder"
+    buildCommand: npm install --legacy-peer-deps
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV
