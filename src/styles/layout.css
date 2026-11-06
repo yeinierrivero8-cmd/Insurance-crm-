@@ -337,10 +337,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--gap-sm);
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   padding: var(--gap-sm);
   background: white;
   border-top: 1.5px solid var(--color-border-subtle);
@@ -348,6 +345,20 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
   padding-bottom: 20px;
   z-index: var(--z-fixed);
+  margin: 0;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    position: relative;
+    grid-template-columns: 1fr;
+    border-radius: 0;
+    border-top: none;
+    border-right: 1.5px solid var(--color-border-subtle);
+    background: var(--bg-sidebar);
+    box-shadow: none;
+  }
 }
 
 .nav-item {
