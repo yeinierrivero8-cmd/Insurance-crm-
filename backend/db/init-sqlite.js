@@ -1,31 +1,40 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
 const bcrypt = require('bcrypt');
 
 const dbPath = path.resolve(__dirname, 'insurance_crm.db');
-const db = new sqlite3.Database(dbPath);
+const db = new Database(dbPath);
+
+// Enable foreign keys
+db.pragma('foreign_keys = ON');
 
 // Helper to run queries sequentially
-const runAsync = (sql) => new Promise((resolve, reject) => {
-  db.run(sql, (err) => {
-    if (err) reject(err);
-    else resolve();
-  });
-});
+const runAsync = (sql) => {
+  try {
+    db.prepare(sql).run();
+    return Promise.resolve();
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
 
-const getAsync = (sql, params = []) => new Promise((resolve, reject) => {
-  db.get(sql, params, (err, row) => {
-    if (err) reject(err);
-    else resolve(row);
-  });
-});
+const getAsync = (sql, params = []) => {
+  try {
+    const row = db.prepare(sql).get(...params);
+    return Promise.resolve(row);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
 
-const runWithParams = (sql, params = []) => new Promise((resolve, reject) => {
-  db.run(sql, params, function(err) {
-    if (err) reject(err);
-    else resolve({ lastID: this.lastID, changes: this.changes });
-  });
-});
+const runWithParams = (sql, params = []) => {
+  try {
+    const info = db.prepare(sql).run(...params);
+    return Promise.resolve({ lastID: info.lastInsertRowid, changes: info.changes });
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
 
 // Initialize SQLite database schema
 async function initDatabase() {

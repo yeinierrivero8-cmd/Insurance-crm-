@@ -1,17 +1,13 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
 
 // Create/open SQLite database
 const dbPath = path.resolve(__dirname, 'insurance_crm.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error opening database:', err.message);
-  } else {
-    console.log('✅ Connected to SQLite database at', dbPath);
-    // Enable foreign keys
-    db.run('PRAGMA foreign_keys = ON');
-  }
-});
+const db = new Database(dbPath);
+
+// Enable foreign keys
+db.pragma('foreign_keys = ON');
+console.log('✅ Connected to SQLite database at', dbPath);
 
 // Pool-like wrapper to maintain same interface as PostgreSQL pool
 const pool = {
@@ -31,28 +27,22 @@ const pool = {
         const hasReturning = sqliteQuery.toUpperCase().includes('RETURNING');
         const isSelect = sql.trim().toUpperCase().startsWith('SELECT');
 
-        if (isSelect || hasReturning) {
-          db.all(sqliteQuery, sqlParams, (err, rows) => {
-            if (err) {
-              console.error('SQLite Query Error:', err.message, 'SQL:', sql);
-              reject(err);
-            } else {
-              resolve({ rows: rows || [] });
-            }
-          });
-        } else {
-          db.run(sqliteQuery, sqlParams, function(err) {
-            if (err) {
-              console.error('SQLite Query Error:', err.message, 'SQL:', sql);
-              reject(err);
-            } else {
-              resolve({
-                rows: [],
-                rowCount: this.changes,
-                lastID: this.lastID
-              });
-            }
-          });
+        try {
+          if (isSelect || hasReturning) {
+            const rows = db.prepare(sqliteQuery).all(...sqlParams);
+            resolve({ rows: rows || [] });
+          } else {
+            const stmt = db.prepare(sqliteQuery);
+            const info = stmt.run(...sqlParams);
+            resolve({
+              rows: [],
+              rowCount: info.changes,
+              lastID: info.lastInsertRowid
+            });
+          }
+        } catch (err) {
+          console.error('SQLite Query Error:', err.message, 'SQL:', sql);
+          reject(err);
         }
       } catch (error) {
         console.error('SQLite Query Error:', error.message, 'SQL:', sql);
@@ -62,9 +52,11 @@ const pool = {
   },
 
   close() {
-    db.close((err) => {
-      if (err) console.error('Error closing database:', err.message);
-    });
+    try {
+      db.close();
+    } catch (err) {
+      console.error('Error closing database:', err.message);
+    }
   }
 };
 

@@ -12,7 +12,13 @@
 # Error details
 
 ```
-Error: page.evaluate: SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document.
-    at UtilityScript.evaluate (<anonymous>:372:16)
-    at UtilityScript.<anonymous> (<anonymous>:1:44)
+Error: browserType.launch: Executable doesn't exist at C:\Users\yeini\AppData\Local\ms-playwright\chromium_headless_shell-1254\chrome-headless-shell-win64\chrome-headless-shell.exe
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
 ```
