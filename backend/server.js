@@ -17,6 +17,9 @@ dotenv.config();
 
 const app = express();
 
+// Define distPath early - used by routes
+const distPath = path.resolve(__dirname, '..', 'dist');
+
 // Security: Middleware for CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
@@ -203,8 +206,8 @@ app.use((req, res, next) => {
   console.log('[REQUEST]', req.method, req.path);
   next();
 });
+
 // Serve static files from dist folder (frontend build)
-const distPath = path.resolve(__dirname, '..', 'dist');
 // Diagnostic: Check if dist folder exists
 const distExists = fs.existsSync(distPath);
 console.log('📊 [DIAGNOSTICS] distPath:', distPath);
