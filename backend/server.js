@@ -208,7 +208,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Check if dist exists
+const distExists = fs.existsSync(distPath);
 console.log('📁 Serving static files from:', distPath);
+console.log('📁 Dist folder exists:', distExists);
+
+if (distExists) {
+  const files = fs.readdirSync(distPath);
+  console.log('📁 Files in dist:', files.slice(0, 5).join(', '));
+}
+
 app.use(express.static(distPath));
 
 // SPA fallback: redirect all non-API non-static requests to index.html
